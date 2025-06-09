@@ -438,6 +438,18 @@
                 <!-- Sezione scanner -->
                 <div class="camera-section">
                     <h4>📷 Scanner Codice a Barre</h4>
+                    
+                    <div class="scanner-tips" style="background: #fff3cd; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid #ffc107;">
+                        <strong>💡 Consigli per una scansione perfetta:</strong>
+                        <ul style="margin-top: 8px; text-align: left; font-size: 0.9em;">
+                            <li>🔆 Illuminazione buona e uniforme</li>
+                            <li>📏 Mantieni distanza 10-30cm dal codice</li>
+                            <li>🎯 Centra il codice nel riquadro rosso</li>
+                            <li>⏱️ Tieni fermo per 2-3 secondi</li>
+                            <li>📱 Usa la fotocamera posteriore se possibile</li>
+                        </ul>
+                    </div>
+                    
                     <div class="camera-container" id="cameraContainer" style="display: none;">
                         <div id="scanner"></div>
                         <div class="scanner-overlay">
@@ -586,17 +598,17 @@
                 return;
             }
 
-            showStatus('📷 Richiesta accesso alla fotocamera...', 'info');
+            showStatus('📷 Avvio scanner migliorato...', 'info');
 
             navigator.mediaDevices.getUserMedia({ 
                 video: { 
                     facingMode: 'environment',
-                    width: { ideal: 640 },
-                    height: { ideal: 480 }
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
                 } 
             })
                 .then(function(stream) {
-                    console.log('Fotocamera attivata');
+                    console.log('Fotocamera attivata con risoluzione alta');
                     document.getElementById('cameraContainer').style.display = 'block';
                     document.getElementById('startBtn').style.display = 'none';
                     document.getElementById('stopBtn').style.display = 'inline-block';
@@ -607,9 +619,15 @@
                             type: "LiveStream",
                             target: document.querySelector('#scanner'),
                             constraints: {
-                                width: 640,
-                                height: 480,
+                                width: { min: 640, ideal: 1280 },
+                                height: { min: 480, ideal: 720 },
                                 facingMode: "environment"
+                            },
+                            area: { // Area di scansione più grande
+                                top: "10%",
+                                right: "10%", 
+                                left: "10%",
+                                bottom: "10%"
                             }
                         },
                         decoder: {
@@ -618,36 +636,93 @@
                                 "ean_reader",
                                 "ean_8_reader",
                                 "code_39_reader",
-                                "code_39_vin_reader",
-                                "codabar_reader",
+                                "code_93_reader",
                                 "upc_reader",
-                                "upc_e_reader"
-                            ]
+                                "upc_e_reader",
+                                "i2of5_reader",
+                                "codabar_reader"
+                            ],
+                            debug: {
+                                showCanvas: true,
+                                showPatches: true,
+                                showFoundPatches: true,
+                                showSkeleton: true,
+                                showLabels: true,
+                                showPatchLabels: true,
+                                showRemainingPatchLabels: true,
+                                boxFromPatches: {
+                                    showTransformed: true,
+                                    showTransformedBox: true,
+                                    showBB: true
+                                }
+                            }
                         },
                         locator: {
-                            patchSize: "medium",
-                            halfSample: true
+                            patchSize: "large",
+                            halfSample: false
                         },
-                        numOfWorkers: 2,
-                        frequency: 10
+                        numOfWorkers: 4,
+                        frequency: 10,
+                        locate: true
                     }, function(err) {
                         if (err) {
                             console.log('Errore Quagga:', err);
                             showStatus('❌ Errore scanner: ' + err.message, 'error');
                             return;
                         }
+                        console.log('✅ Scanner avanzato inizializzato');
                         Quagga.start();
                         isScanning = true;
-                        showStatus('📷 Scanner attivo - inquadra un codice a barre', 'success');
+                        showStatus('📷 Scanner AVANZATO attivo - tieni il codice fermo e ben illuminato', 'success');
+                        
+                        // Aggiungi feedback di tentativi
+                        let attempts = 0;
+                        const maxAttempts = 50;
+                        
+                        const attemptInterval = setInterval(() => {
+                            attempts++;
+                            showStatus(`📷 Scanner attivo - tentativo ${attempts}/${maxAttempts} - tieni fermo il codice`, 'info');
+                            
+                            if (attempts >= maxAttempts) {
+                                clearInterval(attemptInterval);
+                                showStatus('⏰ Prova a avvicinare/allontanare il codice o migliorare l\'illuminazione', 'error');
+                            }
+                        }, 2000);
+                        
+                        // Ferma il contatore quando trova un codice
+                        Quagga.onDetected(function() {
+                            clearInterval(attemptInterval);
+                        });
                     });
 
                     Quagga.onDetected(function(data) {
                         const code = data.codeResult.code;
-                        console.log('Codice rilevato:', code);
-                        searchProduct(code);
+                        const confidence = data.codeResult.confidence || 0;
                         
-                        if (navigator.vibrate) {
-                            navigator.vibrate(200);
+                        console.log('🎯 Codice rilevato:', code, 'Confidenza:', confidence);
+                        
+                        // Accetta solo codici con buona confidenza
+                        if (confidence > 50) {
+                            showStatus(`🎯 Codice trovato: ${code} (confidenza: ${confidence.toFixed(0)})`, 'success');
+                            searchProduct(code);
+                            
+                            if (navigator.vibrate) {
+                                navigator.vibrate([200, 100, 200]);
+                            }
+                            
+                            // Evidenzia visivamente
+                            const overlay = document.querySelector('.scanner-overlay');
+                            if (overlay) {
+                                overlay.style.borderColor = '#28a745';
+                                overlay.style.boxShadow = '0 0 20px #28a745';
+                                setTimeout(() => {
+                                    overlay.style.borderColor = '#ff6b6b';
+                                    overlay.style.boxShadow = '0 0 0 99999px rgba(0,0,0,0.3)';
+                                }, 1500);
+                            }
+                        } else {
+                            console.log('⚠️ Codice scartato per bassa confidenza:', confidence);
+                            showStatus(`⚠️ Codice rilevato ma poco chiaro (confidenza: ${confidence.toFixed(0)}) - riprova`, 'error');
                         }
                     });
                 })
