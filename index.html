@@ -572,6 +572,15 @@
                         if (navigator.vibrate) {
                             navigator.vibrate(200);
                         }
+                        
+                        // Evidenzia visivamente la lettura
+                        const overlay = document.querySelector('.scanner-overlay');
+                        if (overlay) {
+                            overlay.style.borderColor = '#28a745';
+                            setTimeout(() => {
+                                overlay.style.borderColor = '#ff6b6b';
+                            }, 1000);
+                        }
                     });
                 })
                 .catch(function(err) {
@@ -603,6 +612,50 @@
             }
         }
 
+        function searchManualCode() {
+            console.log('🔍 Funzione searchManualCode chiamata');
+            
+            const codeInput = document.getElementById('manualCodeInput');
+            const code = codeInput.value.trim();
+            
+            console.log('📝 Codice inserito:', code);
+            console.log('📊 Prodotti nel database:', excelData.length);
+            
+            if (!code) {
+                showStatus('⚠️ Inserisci un codice da cercare!', 'error');
+                codeInput.focus();
+                return;
+            }
+            
+            if (excelData.length === 0) {
+                showStatus('⚠️ Carica prima il file Excel!', 'error');
+                return;
+            }
+            
+            console.log('✅ Inizio ricerca per:', code);
+            showStatus(`🔍 Ricerca in corso per: ${code}`, 'info');
+            searchProduct(code);
+            
+            // Pulisci il campo input dopo la ricerca
+            codeInput.value = '';
+        }
+
+        // Aggiungi listener per Enter nell'input
+        document.addEventListener('DOMContentLoaded', function() {
+            const codeInput = document.getElementById('manualCodeInput');
+            if (codeInput) {
+                codeInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        searchManualCode();
+                    }
+                });
+                
+                // Disabilita l'input finché non viene caricato il file
+                codeInput.disabled = true;
+                codeInput.placeholder = "Carica prima il file Excel...";
+            }
+        });
+
         function testCamera() {
             showStatus('🔧 Test fotocamera in corso...', 'info');
             
@@ -633,15 +686,41 @@
         }
 
         function searchProduct(code) {
-            // Cerca il prodotto nei dati Excel
+            console.log('🔎 Funzione searchProduct chiamata con:', code);
+            console.log('📋 Primi 3 prodotti nel database:', excelData.slice(0, 3));
+            
+            // Cerca il prodotto nei dati Excel con ricerca più flessibile
             const product = excelData.find(row => {
-                const articleCode = String(row[3] || ''); // Colonna "Articolo"
-                return articleCode.includes(code) || code.includes(articleCode);
+                const articleCode = String(row[3] || '').toLowerCase(); // Colonna "Articolo"
+                const searchCode = String(code).toLowerCase();
+                
+                console.log(`🔄 Confronto: "${articleCode}" con "${searchCode}"`);
+                
+                // Ricerca esatta o parziale
+                const match = articleCode.includes(searchCode) || 
+                             searchCode.includes(articleCode) ||
+                             articleCode === searchCode;
+                             
+                if (match) {
+                    console.log('✅ MATCH TROVATO!', row);
+                }
+                
+                return match;
             });
+
+            console.log('🎯 Risultato ricerca:', product ? 'TROVATO' : 'NON TROVATO');
 
             if (product) {
                 displayProduct(product, code);
                 showStatus(`✅ Prodotto trovato per il codice: ${code}`, 'success');
+                
+                // Scroll verso il risultato
+                setTimeout(() => {
+                    document.getElementById('results').scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }, 100);
             } else {
                 displayNoResult(code);
                 showStatus(`❌ Nessun prodotto trovato per il codice: ${code}`, 'error');
@@ -686,7 +765,9 @@
                     </div>
                     
                     <div style="margin-top: 10px; font-size: 0.8em; color: #6c757d;">
-                        Codice scansionato: ${scannedCode}
+                        <span style="background: #e3f2fd; padding: 3px 8px; border-radius: 10px;">
+                            📱 Codice: ${scannedCode}
+                        </span>
                     </div>
                 </div>
             `;
@@ -701,6 +782,14 @@
                     <h3>🔍 Prodotto non trovato</h3>
                     <p>Il codice <strong>${code}</strong> non è presente nel database degli sconti.</p>
                     <p style="margin-top: 10px; font-size: 0.9em;">Il prodotto potrebbe non essere in promozione o il codice potrebbe non corrispondere esattamente.</p>
+                    <div style="margin-top: 15px; font-size: 0.9em;">
+                        <strong>💡 Suggerimenti:</strong>
+                        <ul style="text-align: left; margin-top: 5px;">
+                            <li>Prova a inserire solo parte del codice</li>
+                            <li>Verifica che il codice sia corretto</li>
+                            <li>Controlla se il prodotto è nel file Excel</li>
+                        </ul>
+                    </div>
                 </div>
             `;
             
