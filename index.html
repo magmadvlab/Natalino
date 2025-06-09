@@ -124,6 +124,12 @@
             transition: all 0.3s ease;
         }
         
+        .code-input:disabled {
+            background-color: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+        
         .code-input:focus {
             border-color: #007bff;
             box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
@@ -413,9 +419,12 @@
                 <div class="manual-input-section">
                     <h4>✍️ Inserimento Manuale</h4>
                     <div class="input-container">
-                        <input type="text" id="manualCodeInput" placeholder="Inserisci il codice del prodotto..." class="code-input">
+                        <input type="text" id="manualCodeInput" placeholder="Carica prima il file Excel..." class="code-input" disabled>
                         <button class="btn search-btn" onclick="searchManualCode()">
                             🔍 Cerca
+                        </button>
+                        <button class="btn" onclick="forceEnableInput()" style="background: linear-gradient(135deg, #fd7e14, #e85d04);">
+                            🔓 Forza Attivazione
                         </button>
                     </div>
                     <p class="input-help">Inserisci il codice a barre o il codice articolo</p>
@@ -476,10 +485,14 @@
                         // Salva i dati (salta la riga dell'intestazione)
                         excelData = jsonData.slice(1);
                         
+                        console.log('📊 File Excel caricato con', excelData.length, 'prodotti');
+                        
                         showStatus(`✅ File caricato con successo! ${excelData.length} prodotti trovati.`, 'success');
                         document.getElementById('uploadSection').classList.add('loaded');
                         document.getElementById('fileStatus').innerHTML = `<p style="color: #28a745; margin-top: 10px;">📊 ${excelData.length} prodotti caricati</p>`;
-                        document.getElementById('startBtn').disabled = false;
+                        
+                        // Abilita controlli
+                        enableControls();
                         
                     } catch (error) {
                         showStatus('❌ Errore nel caricamento del file Excel', 'error');
@@ -490,10 +503,74 @@
             }
         });
 
+        function enableControls() {
+            const startBtn = document.getElementById('startBtn');
+            const manualInput = document.getElementById('manualCodeInput');
+            
+            if (startBtn) {
+                startBtn.disabled = false;
+                console.log('✅ Scanner abilitato');
+            }
+            
+            if (manualInput) {
+                manualInput.disabled = false;
+                manualInput.placeholder = "Inserisci il codice del prodotto...";
+                manualInput.style.backgroundColor = '#ffffff';
+                manualInput.style.color = '#495057';
+                console.log('✅ Campo manuale abilitato');
+            }
+        }
+
+        function forceEnableInput() {
+            const input = document.getElementById('manualCodeInput');
+            input.disabled = false;
+            input.placeholder = "Campo forzatamente abilitato!";
+            input.style.backgroundColor = '#ffffff';
+            input.style.color = '#495057';
+            input.focus();
+            showStatus('🔓 Campo di input abilitato forzatamente', 'info');
+        }
+
         function showStatus(message, type = 'info') {
             const statusDiv = document.getElementById('status');
             statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
         }
+
+        function searchManualCode() {
+            const codeInput = document.getElementById('manualCodeInput');
+            const code = codeInput.value.trim();
+            
+            console.log('🔍 Ricerca manuale:', code);
+            
+            if (!code) {
+                showStatus('⚠️ Inserisci un codice da cercare!', 'error');
+                codeInput.focus();
+                return;
+            }
+            
+            if (excelData.length === 0) {
+                showStatus('⚠️ Carica prima il file Excel!', 'error');
+                return;
+            }
+            
+            showStatus(`🔍 Ricerca in corso per: ${code}`, 'info');
+            searchProduct(code);
+            
+            // Pulisci il campo input dopo la ricerca
+            codeInput.value = '';
+        }
+
+        // Enter key per ricerca
+        document.addEventListener('DOMContentLoaded', function() {
+            const codeInput = document.getElementById('manualCodeInput');
+            if (codeInput) {
+                codeInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        searchManualCode();
+                    }
+                });
+            }
+        });
 
         function startScanner() {
             if (excelData.length === 0) {
@@ -501,7 +578,6 @@
                 return;
             }
 
-            // Controllo supporto fotocamera
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 showStatus('❌ Il tuo browser non supporta l\'accesso alla fotocamera', 'error');
                 return;
@@ -511,13 +587,13 @@
 
             navigator.mediaDevices.getUserMedia({ 
                 video: { 
-                    facingMode: 'environment', // Usa fotocamera posteriore se disponibile
+                    facingMode: 'environment',
                     width: { ideal: 640 },
                     height: { ideal: 480 }
                 } 
             })
                 .then(function(stream) {
-                    console.log('Fotocamera attivata con successo');
+                    console.log('Fotocamera attivata');
                     document.getElementById('cameraContainer').style.display = 'block';
                     document.getElementById('startBtn').style.display = 'none';
                     document.getElementById('stopBtn').style.display = 'inline-block';
@@ -554,10 +630,9 @@
                     }, function(err) {
                         if (err) {
                             console.log('Errore Quagga:', err);
-                            showStatus('❌ Errore nell\'inizializzazione dello scanner: ' + err.message, 'error');
+                            showStatus('❌ Errore scanner: ' + err.message, 'error');
                             return;
                         }
-                        console.log('Quagga inizializzato');
                         Quagga.start();
                         isScanning = true;
                         showStatus('📷 Scanner attivo - inquadra un codice a barre', 'success');
@@ -568,31 +643,19 @@
                         console.log('Codice rilevato:', code);
                         searchProduct(code);
                         
-                        // Feedback sonoro/visivo
                         if (navigator.vibrate) {
                             navigator.vibrate(200);
-                        }
-                        
-                        // Evidenzia visivamente la lettura
-                        const overlay = document.querySelector('.scanner-overlay');
-                        if (overlay) {
-                            overlay.style.borderColor = '#28a745';
-                            setTimeout(() => {
-                                overlay.style.borderColor = '#ff6b6b';
-                            }, 1000);
                         }
                     });
                 })
                 .catch(function(err) {
-                    console.error('Errore fotocamera completo:', err);
+                    console.error('Errore fotocamera:', err);
                     let errorMessage = '❌ Impossibile accedere alla fotocamera. ';
                     
                     if (err.name === 'NotAllowedError') {
-                        errorMessage += 'Permesso negato. Abilita l\'accesso alla fotocamera nelle impostazioni del browser.';
+                        errorMessage += 'Permesso negato.';
                     } else if (err.name === 'NotFoundError') {
-                        errorMessage += 'Nessuna fotocamera trovata sul dispositivo.';
-                    } else if (err.name === 'NotSupportedError') {
-                        errorMessage += 'Fotocamera non supportata dal browser.';
+                        errorMessage += 'Nessuna fotocamera trovata.';
                     } else {
                         errorMessage += 'Errore: ' + err.message;
                     }
@@ -612,64 +675,6 @@
             }
         }
 
-        function searchManualCode() {
-            console.log('🔍 Funzione searchManualCode chiamata');
-            
-            const codeInput = document.getElementById('manualCodeInput');
-            const code = codeInput.value.trim();
-            
-            console.log('📝 Codice inserito:', code);
-            console.log('📊 Prodotti nel database:', excelData.length);
-            
-            if (!code) {
-                showStatus('⚠️ Inserisci un codice da cercare!', 'error');
-                codeInput.focus();
-                return;
-            }
-            
-            if (excelData.length === 0) {
-                showStatus('⚠️ Carica prima il file Excel!', 'error');
-                return;
-            }
-            
-            console.log('✅ Inizio ricerca per:', code);
-            showStatus(`🔍 Ricerca in corso per: ${code}`, 'info');
-            searchProduct(code);
-            
-            // Pulisci il campo input dopo la ricerca
-            codeInput.value = '';
-        }
-
-        // Aggiungi listener per Enter nell'input
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 DOM caricato, inizializzazione...');
-            
-            const codeInput = document.getElementById('manualCodeInput');
-            const startBtn = document.getElementById('startBtn');
-            
-            if (codeInput) {
-                console.log('✅ Campo input trovato');
-                codeInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        console.log('⌨️ Enter premuto');
-                        searchManualCode();
-                    }
-                });
-                
-                // Disabilita l'input finché non viene caricato il file
-                codeInput.disabled = true;
-                codeInput.placeholder = "Carica prima il file Excel...";
-                console.log('⚠️ Campo input disabilitato in attesa del file');
-            } else {
-                console.error('❌ Campo manualCodeInput non trovato nel DOM!');
-            }
-            
-            if (startBtn) {
-                startBtn.disabled = true;
-                console.log('⚠️ Pulsante scanner disabilitato in attesa del file');
-            }
-        });
-
         function testCamera() {
             showStatus('🔧 Test fotocamera in corso...', 'info');
             
@@ -681,9 +686,8 @@
                 } 
             })
             .then(function(stream) {
-                showStatus('✅ Fotocamera funziona correttamente!', 'success');
+                showStatus('✅ Fotocamera funziona!', 'success');
                 
-                // Crea un elemento video temporaneo per testare
                 const video = document.createElement('video');
                 video.srcObject = stream;
                 video.play();
@@ -700,35 +704,21 @@
         }
 
         function searchProduct(code) {
-            console.log('🔎 Funzione searchProduct chiamata con:', code);
-            console.log('📋 Primi 3 prodotti nel database:', excelData.slice(0, 3));
+            console.log('🔎 Ricerca prodotto:', code);
             
-            // Cerca il prodotto nei dati Excel con ricerca più flessibile
             const product = excelData.find(row => {
-                const articleCode = String(row[3] || '').toLowerCase(); // Colonna "Articolo"
+                const articleCode = String(row[3] || '').toLowerCase();
                 const searchCode = String(code).toLowerCase();
                 
-                console.log(`🔄 Confronto: "${articleCode}" con "${searchCode}"`);
-                
-                // Ricerca esatta o parziale
-                const match = articleCode.includes(searchCode) || 
-                             searchCode.includes(articleCode) ||
-                             articleCode === searchCode;
-                             
-                if (match) {
-                    console.log('✅ MATCH TROVATO!', row);
-                }
-                
-                return match;
+                return articleCode.includes(searchCode) || 
+                       searchCode.includes(articleCode) ||
+                       articleCode === searchCode;
             });
-
-            console.log('🎯 Risultato ricerca:', product ? 'TROVATO' : 'NON TROVATO');
 
             if (product) {
                 displayProduct(product, code);
-                showStatus(`✅ Prodotto trovato per il codice: ${code}`, 'success');
+                showStatus(`✅ Prodotto trovato per: ${code}`, 'success');
                 
-                // Scroll verso il risultato
                 setTimeout(() => {
                     document.getElementById('results').scrollIntoView({ 
                         behavior: 'smooth', 
@@ -737,7 +727,7 @@
                 }, 100);
             } else {
                 displayNoResult(code);
-                showStatus(`❌ Nessun prodotto trovato per il codice: ${code}`, 'error');
+                showStatus(`❌ Nessun prodotto trovato per: ${code}`, 'error');
             }
         }
 
@@ -810,7 +800,6 @@
             resultsDiv.innerHTML = noResultHtml + resultsDiv.innerHTML;
         }
 
-        // Pulizia quando si chiude la pagina
         window.addEventListener('beforeunload', function() {
             if (isScanning) {
                 Quagga.stop();
