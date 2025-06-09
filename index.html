@@ -92,6 +92,97 @@
             box-shadow: 0 10px 20px rgba(0,123,255,0.3);
         }
         
+        .manual-input-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .manual-input-section h4 {
+            margin-bottom: 15px;
+            color: #495057;
+            font-size: 1.2em;
+        }
+        
+        .input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .code-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 25px;
+            font-size: 1.1em;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .code-input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+        
+        .search-btn {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            white-space: nowrap;
+            min-width: 120px;
+        }
+        
+        .search-btn:hover {
+            box-shadow: 0 8px 16px rgba(0,123,255,0.3);
+        }
+        
+        .input-help {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin: 0;
+            font-style: italic;
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 30px 0;
+            position: relative;
+        }
+        
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #dee2e6;
+        }
+        
+        .divider span {
+            background: white;
+            padding: 0 20px;
+            color: #6c757d;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .camera-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .camera-section h4 {
+            margin-bottom: 15px;
+            color: #495057;
+            font-size: 1.2em;
+        }
+        
         .scanner-section {
             margin: 30px 0;
             text-align: center;
@@ -316,24 +407,46 @@
             </div>
             
             <div class="scanner-section">
-                <h3>📷 Scanner Codice a Barre</h3>
-                <div class="camera-container" id="cameraContainer" style="display: none;">
-                    <div id="scanner"></div>
-                    <div class="scanner-overlay">
-                        <div class="scanner-line"></div>
+                <h3>🔍 Ricerca Prodotto</h3>
+                
+                <!-- Sezione inserimento manuale -->
+                <div class="manual-input-section">
+                    <h4>✍️ Inserimento Manuale</h4>
+                    <div class="input-container">
+                        <input type="text" id="manualCodeInput" placeholder="Inserisci il codice del prodotto..." class="code-input">
+                        <button class="btn search-btn" onclick="searchManualCode()">
+                            🔍 Cerca
+                        </button>
                     </div>
+                    <p class="input-help">Inserisci il codice a barre o il codice articolo</p>
                 </div>
                 
-                <div class="controls">
-                    <button class="btn" id="startBtn" onclick="startScanner()" disabled>
-                        📷 Avvia Scanner
-                    </button>
-                    <button class="btn stop" id="stopBtn" onclick="stopScanner()" style="display: none;">
-                        ⏹️ Ferma Scanner
-                    </button>
-                    <button class="btn" onclick="testCamera()" style="background: linear-gradient(135deg, #6f42c1, #5a2d91);">
-                        🔧 Test Fotocamera
-                    </button>
+                <!-- Divisore -->
+                <div class="divider">
+                    <span>OPPURE</span>
+                </div>
+                
+                <!-- Sezione scanner -->
+                <div class="camera-section">
+                    <h4>📷 Scanner Codice a Barre</h4>
+                    <div class="camera-container" id="cameraContainer" style="display: none;">
+                        <div id="scanner"></div>
+                        <div class="scanner-overlay">
+                            <div class="scanner-line"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="controls">
+                        <button class="btn" id="startBtn" onclick="startScanner()" disabled>
+                            📷 Avvia Scanner
+                        </button>
+                        <button class="btn stop" id="stopBtn" onclick="stopScanner()" style="display: none;">
+                            ⏹️ Ferma Scanner
+                        </button>
+                        <button class="btn" onclick="testCamera()" style="background: linear-gradient(135deg, #6f42c1, #5a2d91);">
+                            🔧 Test Fotocamera
+                        </button>
+                    </div>
                 </div>
                 
                 <div id="status"></div>
