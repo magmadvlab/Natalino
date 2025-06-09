@@ -642,10 +642,16 @@
 
         // Aggiungi listener per Enter nell'input
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 DOM caricato, inizializzazione...');
+            
             const codeInput = document.getElementById('manualCodeInput');
+            const startBtn = document.getElementById('startBtn');
+            
             if (codeInput) {
+                console.log('✅ Campo input trovato');
                 codeInput.addEventListener('keypress', function(e) {
                     if (e.key === 'Enter') {
+                        console.log('⌨️ Enter premuto');
                         searchManualCode();
                     }
                 });
@@ -653,6 +659,14 @@
                 // Disabilita l'input finché non viene caricato il file
                 codeInput.disabled = true;
                 codeInput.placeholder = "Carica prima il file Excel...";
+                console.log('⚠️ Campo input disabilitato in attesa del file');
+            } else {
+                console.error('❌ Campo manualCodeInput non trovato nel DOM!');
+            }
+            
+            if (startBtn) {
+                startBtn.disabled = true;
+                console.log('⚠️ Pulsante scanner disabilitato in attesa del file');
             }
         });
 
