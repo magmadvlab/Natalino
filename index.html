@@ -440,14 +440,18 @@
                     <h4>📷 Scanner Codice a Barre</h4>
                     
                     <div class="scanner-tips" style="background: #fff3cd; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid #ffc107;">
-                        <strong>💡 Consigli per una scansione perfetta:</strong>
+                        <strong>🎯 GUIDA SCANSIONE OTTIMALE:</strong>
                         <ul style="margin-top: 8px; text-align: left; font-size: 0.9em;">
-                            <li>🔆 Illuminazione buona e uniforme</li>
-                            <li>📏 Mantieni distanza 10-30cm dal codice</li>
-                            <li>🎯 Centra il codice nel riquadro rosso</li>
-                            <li>⏱️ Tieni fermo per 2-3 secondi</li>
-                            <li>📱 Usa la fotocamera posteriore se possibile</li>
+                            <li>🔆 <strong>Luce diretta</strong> sul codice (evita ombre)</li>
+                            <li>📏 <strong>Distanza 15-25cm</strong> dal codice</li>
+                            <li>🎯 <strong>Centra completamente</strong> nel riquadro rosso</li>
+                            <li>⏱️ <strong>Tieni FERMO</strong> per 3-5 secondi</li>
+                            <li>📱 <strong>Telefono parallelo</strong> al codice</li>
+                            <li>📄 <strong>Codice su superficie piatta</strong></li>
                         </ul>
+                        <div style="background: #e3f2fd; padding: 10px; margin-top: 10px; border-radius: 5px; font-size: 0.9em;">
+                            <strong>💡 Se non funziona:</strong> Prova prima con un codice grande e ben stampato
+                        </div>
                     </div>
                     
                     <div class="camera-container" id="cameraContainer" style="display: none;">
@@ -598,70 +602,47 @@
                 return;
             }
 
-            showStatus('📷 Avvio scanner migliorato...', 'info');
+            showStatus('📷 Avvio scanner ottimizzato per codici a barre...', 'info');
 
             navigator.mediaDevices.getUserMedia({ 
                 video: { 
                     facingMode: 'environment',
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
+                    width: { ideal: 800 },
+                    height: { ideal: 600 }
                 } 
             })
                 .then(function(stream) {
-                    console.log('Fotocamera attivata con risoluzione alta');
+                    console.log('Fotocamera attivata per riconoscimento codici');
                     document.getElementById('cameraContainer').style.display = 'block';
                     document.getElementById('startBtn').style.display = 'none';
                     document.getElementById('stopBtn').style.display = 'inline-block';
                     
+                    // Configurazione SEMPLIFICATA per migliore riconoscimento
                     Quagga.init({
                         inputStream: {
                             name: "Live",
                             type: "LiveStream",
                             target: document.querySelector('#scanner'),
                             constraints: {
-                                width: { min: 640, ideal: 1280 },
-                                height: { min: 480, ideal: 720 },
+                                width: 800,
+                                height: 600,
                                 facingMode: "environment"
                             },
-                            area: { // Area di scansione più grande
-                                top: "10%",
-                                right: "10%", 
-                                left: "10%",
-                                bottom: "10%"
-                            }
+                            singleChannel: false // Usa tutti i canali colore
                         },
                         decoder: {
                             readers: [
-                                "code_128_reader",
-                                "ean_reader",
-                                "ean_8_reader",
-                                "code_39_reader",
-                                "code_93_reader",
-                                "upc_reader",
-                                "upc_e_reader",
-                                "i2of5_reader",
-                                "codabar_reader"
-                            ],
-                            debug: {
-                                showCanvas: true,
-                                showPatches: true,
-                                showFoundPatches: true,
-                                showSkeleton: true,
-                                showLabels: true,
-                                showPatchLabels: true,
-                                showRemainingPatchLabels: true,
-                                boxFromPatches: {
-                                    showTransformed: true,
-                                    showTransformedBox: true,
-                                    showBB: true
-                                }
-                            }
+                                "code_128_reader", // Il più comune
+                                "ean_reader",      // EAN-13
+                                "ean_8_reader",    // EAN-8
+                                "code_39_reader"   // Code 39
+                            ]
                         },
                         locator: {
-                            patchSize: "large",
-                            halfSample: false
+                            patchSize: "medium",
+                            halfSample: true
                         },
-                        numOfWorkers: 4,
+                        numOfWorkers: navigator.hardwareConcurrency || 4,
                         frequency: 10,
                         locate: true
                     }, function(err) {
@@ -670,72 +651,105 @@
                             showStatus('❌ Errore scanner: ' + err.message, 'error');
                             return;
                         }
-                        console.log('✅ Scanner avanzato inizializzato');
+                        console.log('✅ Scanner ottimizzato inizializzato');
                         Quagga.start();
                         isScanning = true;
-                        showStatus('📷 Scanner AVANZATO attivo - tieni il codice fermo e ben illuminato', 'success');
+                        showStatus('📷 SCANNER ATTIVO: Posiziona il codice a barre nel riquadro rosso', 'success');
                         
-                        // Aggiungi feedback di tentativi
-                        let attempts = 0;
-                        const maxAttempts = 50;
-                        
-                        const attemptInterval = setInterval(() => {
-                            attempts++;
-                            showStatus(`📷 Scanner attivo - tentativo ${attempts}/${maxAttempts} - tieni fermo il codice`, 'info');
-                            
-                            if (attempts >= maxAttempts) {
-                                clearInterval(attemptInterval);
-                                showStatus('⏰ Prova a avvicinare/allontanare il codice o migliorare l\'illuminazione', 'error');
+                        // Feedback ogni 3 secondi
+                        let scanTime = 0;
+                        const scanInterval = setInterval(() => {
+                            scanTime += 3;
+                            if (scanTime <= 30) {
+                                showStatus(`📷 Scansione in corso... ${scanTime}s - Mantieni il codice fermo e ben illuminato`, 'info');
+                            } else {
+                                clearInterval(scanInterval);
+                                showStatus('⏰ Se non funziona, prova a: 1) Avvicinare/allontanare 2) Migliorare luce 3) Tenere più fermo', 'error');
                             }
-                        }, 2000);
+                        }, 3000);
                         
-                        // Ferma il contatore quando trova un codice
+                        // Pulisci l'intervallo quando trova qualcosa
                         Quagga.onDetected(function() {
-                            clearInterval(attemptInterval);
+                            clearInterval(scanInterval);
                         });
                     });
 
-                    Quagga.onDetected(function(data) {
-                        const code = data.codeResult.code;
-                        const confidence = data.codeResult.confidence || 0;
-                        
-                        console.log('🎯 Codice rilevato:', code, 'Confidenza:', confidence);
-                        
-                        // Accetta solo codici con buona confidenza
-                        if (confidence > 50) {
-                            showStatus(`🎯 Codice trovato: ${code} (confidenza: ${confidence.toFixed(0)})`, 'success');
-                            searchProduct(code);
+                    // Event listener per i codici rilevati
+                    Quagga.onDetected(function(result) {
+                        try {
+                            const code = result.codeResult.code;
+                            const format = result.codeResult.format;
+                            const confidence = Math.round(result.codeResult.confidence || 0);
                             
-                            if (navigator.vibrate) {
-                                navigator.vibrate([200, 100, 200]);
-                            }
+                            console.log(`🎯 CODICE RILEVATO: ${code}`);
+                            console.log(`📋 Formato: ${format}`);
+                            console.log(`📊 Confidenza: ${confidence}`);
                             
-                            // Evidenzia visivamente
-                            const overlay = document.querySelector('.scanner-overlay');
-                            if (overlay) {
-                                overlay.style.borderColor = '#28a745';
-                                overlay.style.boxShadow = '0 0 20px #28a745';
+                            // Accetta codici con confidenza ragionevole
+                            if (confidence >= 30) {
+                                showStatus(`🎉 CODICE TROVATO: ${code} (${format}, confidenza: ${confidence})`, 'success');
+                                
+                                // Vibrazione di successo
+                                if (navigator.vibrate) {
+                                    navigator.vibrate([100, 50, 100, 50, 200]);
+                                }
+                                
+                                // Effetto visivo di successo
+                                const overlay = document.querySelector('.scanner-overlay');
+                                if (overlay) {
+                                    overlay.style.borderColor = '#28a745';
+                                    overlay.style.borderWidth = '4px';
+                                    overlay.style.boxShadow = '0 0 30px #28a745';
+                                    setTimeout(() => {
+                                        overlay.style.borderColor = '#ff6b6b';
+                                        overlay.style.borderWidth = '2px';
+                                        overlay.style.boxShadow = '0 0 0 99999px rgba(0,0,0,0.3)';
+                                    }, 2000);
+                                }
+                                
+                                // Cerca il prodotto
+                                searchProduct(code);
+                                
+                                // Pausa la scansione per evitare letture multiple
                                 setTimeout(() => {
-                                    overlay.style.borderColor = '#ff6b6b';
-                                    overlay.style.boxShadow = '0 0 0 99999px rgba(0,0,0,0.3)';
-                                }, 1500);
+                                    if (isScanning) {
+                                        showStatus('📷 Scanner pronto per il prossimo codice', 'info');
+                                    }
+                                }, 3000);
+                                
+                            } else {
+                                console.log(`⚠️ Codice scartato: confidenza troppo bassa (${confidence})`);
+                                showStatus(`📷 Codice rilevato ma poco chiaro (${confidence}%) - riprova con migliore illuminazione`, 'error');
                             }
-                        } else {
-                            console.log('⚠️ Codice scartato per bassa confidenza:', confidence);
-                            showStatus(`⚠️ Codice rilevato ma poco chiaro (confidenza: ${confidence.toFixed(0)}) - riprova`, 'error');
+                        } catch (error) {
+                            console.error('Errore nel processare il codice:', error);
+                            showStatus('❌ Errore nella lettura del codice', 'error');
+                        }
+                    });
+                    
+                    // Event listener per gli errori di processing
+                    Quagga.onProcessed(function(result) {
+                        if (result && result.boxes) {
+                            console.log('📦 Box rilevati:', result.boxes.length);
+                            // Mostra che sta analizzando
+                            if (result.boxes.length > 0) {
+                                showStatus('🔍 Analizzando pattern nel codice...', 'info');
+                            }
                         }
                     });
                 })
                 .catch(function(err) {
                     console.error('Errore fotocamera:', err);
-                    let errorMessage = '❌ Impossibile accedere alla fotocamera. ';
+                    let errorMessage = '❌ Errore fotocamera: ';
                     
                     if (err.name === 'NotAllowedError') {
-                        errorMessage += 'Permesso negato.';
+                        errorMessage += 'Permesso negato. Abilita la fotocamera nelle impostazioni.';
                     } else if (err.name === 'NotFoundError') {
                         errorMessage += 'Nessuna fotocamera trovata.';
+                    } else if (err.name === 'NotReadableError') {
+                        errorMessage += 'Fotocamera in uso da altra app.';
                     } else {
-                        errorMessage += 'Errore: ' + err.message;
+                        errorMessage += err.message;
                     }
                     
                     showStatus(errorMessage, 'error');
