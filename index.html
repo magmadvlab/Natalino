@@ -439,18 +439,18 @@
                 <div class="camera-section">
                     <h4>📷 Scanner Codice a Barre</h4>
                     
-                    <div class="scanner-tips" style="background: #d1ecf1; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid #17a2b8;">
-                        <strong>🔆 MIGLIORARE L'ILLUMINAZIONE - TRUCCHI:</strong>
+                    <div class="scanner-tips" style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid #28a745;">
+                        <strong>🔦 STRATEGIA LUCE MASSIMA:</strong>
                         <ul style="margin-top: 8px; text-align: left; font-size: 0.9em;">
-                            <li>💡 <strong>Luce diretta dall'alto</strong> - lampada o luce del soffitto</li>
-                            <li>🔦 <strong>Flash del telefono</strong> - attiva la torcia se disponibile</li>
-                            <li>🪟 <strong>Vicino alla finestra</strong> - luce naturale è ottima</li>
-                            <li>📱 <strong>Evita ombre</strong> - non coprire il codice con le mani</li>
-                            <li>⏰ <strong>Tieni FERMO 5+ secondi</strong> - più tempo = migliore lettura</li>
-                            <li>📏 <strong>Distanza 20cm</strong> - né troppo vicino né troppo lontano</li>
+                            <li>🔦 <strong>Clicca "Scanner + Torcia"</strong> - attiva torcia automaticamente</li>
+                            <li>💡 <strong>Clicca "Attiva Torcia"</strong> - forza attivazione torcia</li>
+                            <li>🏠 <strong>Vai nella stanza più illuminata</strong> di casa</li>
+                            <li>💡 <strong>Accendi TUTTE le luci</strong> disponibili</li>
+                            <li>🪟 <strong>Luce naturale + artificiale</strong> = combinazione perfetta</li>
+                            <li>📱 <strong>Confidenza ridotta al 5%</strong> - accetta quasi tutto</li>
                         </ul>
-                        <div style="background: #d4edda; padding: 10px; margin-top: 10px; border-radius: 5px; font-size: 0.9em; border-left: 3px solid #28a745;">
-                            <strong>🎯 STAI ANDANDO BENE!</strong> Lo scanner rileva i codici, serve solo più luce/stabilità
+                        <div style="background: #fff3cd; padding: 10px; margin-top: 10px; border-radius: 5px; font-size: 0.9em; border-left: 3px solid #ffc107;">
+                            <strong>⚡ ULTRA-PERMISSIVO:</strong> Ora accetta codici anche con confidenza molto bassa (5%)
                         </div>
                     </div>
                     
@@ -475,7 +475,10 @@
                             🐛 Debug Scanner
                         </button>
                         <button class="btn" onclick="trySimpleScanner()" style="background: linear-gradient(135deg, #17a2b8, #138496);">
-                            🚀 Scanner Semplice
+                            🔦 Scanner + Torcia
+                        </button>
+                        <button class="btn" onclick="enableTorch()" style="background: linear-gradient(135deg, #ffc107, #e0a800);">
+                            💡 Attiva Torcia
                         </button>
                     </div>
                 </div>
