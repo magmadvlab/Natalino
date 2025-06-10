@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scanner Codici a Barre - Controllo Sconti</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/zxing-library/0.20.0/umd/index.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
@@ -481,8 +483,11 @@
                         <button class="btn" onclick="tryNativeCamera()" style="background: linear-gradient(135deg, #ff6b6b, #ee5a52);">
                             📱 Camera iPhone
                         </button>
-                        <button class="btn" onclick="tryBrowserScanner()" style="background: linear-gradient(135deg, #28a745, #20c997);">
-                            🌐 Scanner Browser
+                        <button class="btn" onclick="tryZXingScanner()" style="background: linear-gradient(135deg, #9c27b0, #7b1fa2);">
+                            🆕 ZXing Scanner
+                        </button>
+                        <button class="btn" onclick="generateTestBarcode()" style="background: linear-gradient(135deg, #ff9800, #f57c00);">
+                            🏷️ Genera Test
                         </button>
                     </div>
                 </div>
