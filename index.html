@@ -439,17 +439,19 @@
                 <div class="camera-section">
                     <h4>📷 Scanner Codice a Barre</h4>
                     
-                    <div class="scanner-tips" style="background: #d4edda; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid #28a745;">
-                        <strong>🎯 PROBLEMA RISOLTO - Scanner a singola lettura:</strong>
+                    <div class="scanner-tips" style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid #2196f3;">
+                        <strong>📱 SOLUZIONI SPECIFICHE per iPhone iOS:</strong>
                         <ul style="margin-top: 8px; text-align: left; font-size: 0.9em;">
-                            <li>✅ <strong>Scanner si ferma</strong> automaticamente dopo lettura riuscita</li>
-                            <li>🔄 <strong>Un codice alla volta</strong> - evita confusione</li>
-                            <li>📱 <strong>Pulsante "Avvia"</strong> riappare per prossima scansione</li>
-                            <li>🎯 <strong>Scanner + Torcia</strong> = più permissivo (confidenza 5%)</li>
-                            <li>📷 <strong>Scanner normale</strong> = più preciso (confidenza 50%)</li>
+                            <li>📸 <strong>"Camera iPhone"</strong> - Scatta foto e analizza (funziona sempre)</li>
+                            <li>🌐 <strong>"Scanner Browser"</strong> - Usa API native iOS se disponibili</li>
+                            <li>🔦 <strong>Torcia</strong> - Non supportata su Safari iOS (limitazione Apple)</li>
+                            <li>📷 <strong>Scanner normale</strong> - Potrebbe non funzionare su Safari</li>
                         </ul>
-                        <div style="background: #cce7ff; padding: 10px; margin-top: 10px; border-radius: 5px; font-size: 0.9em; border-left: 3px solid #007bff;">
-                            <strong>💡 Strategia:</strong> Se non funziona con scanner normale, usa "Scanner + Torcia" più permissivo
+                        <div style="background: #fff3cd; padding: 10px; margin-top: 10px; border-radius: 5px; font-size: 0.9em; border-left: 3px solid #ffc107;">
+                            <strong>💡 CONSIGLIO:</strong> Su iPhone prova prima "📸 Camera iPhone" - più affidabile
+                        </div>
+                        <div style="background: #f8d7da; padding: 10px; margin-top: 10px; border-radius: 5px; font-size: 0.9em; border-left: 3px solid #dc3545;">
+                            <strong>⚠️ ALTERNATIVA:</strong> Se niente funziona, usa Chrome invece di Safari
                         </div>
                     </div>
                     
@@ -476,8 +478,11 @@
                         <button class="btn" onclick="trySimpleScanner()" style="background: linear-gradient(135deg, #17a2b8, #138496);">
                             🔦 Scanner + Torcia
                         </button>
-                        <button class="btn" onclick="enableTorch()" style="background: linear-gradient(135deg, #ffc107, #e0a800);">
-                            💡 Attiva Torcia
+                        <button class="btn" onclick="tryNativeCamera()" style="background: linear-gradient(135deg, #ff6b6b, #ee5a52);">
+                            📱 Camera iPhone
+                        </button>
+                        <button class="btn" onclick="tryBrowserScanner()" style="background: linear-gradient(135deg, #28a745, #20c997);">
+                            🌐 Scanner Browser
                         </button>
                     </div>
                 </div>
