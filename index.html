@@ -440,17 +440,15 @@
                     <h4>📷 Scanner Codice a Barre</h4>
                     
                     <div class="scanner-tips" style="background: #fff3cd; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid #ffc107;">
-                        <strong>🎯 GUIDA SCANSIONE OTTIMALE:</strong>
+                        <strong>⚠️ IMPORTANTE - Test con codici veri:</strong>
                         <ul style="margin-top: 8px; text-align: left; font-size: 0.9em;">
-                            <li>🔆 <strong>Luce diretta</strong> sul codice (evita ombre)</li>
-                            <li>📏 <strong>Distanza 15-25cm</strong> dal codice</li>
-                            <li>🎯 <strong>Centra completamente</strong> nel riquadro rosso</li>
-                            <li>⏱️ <strong>Tieni FERMO</strong> per 3-5 secondi</li>
-                            <li>📱 <strong>Telefono parallelo</strong> al codice</li>
-                            <li>📄 <strong>Codice su superficie piatta</strong></li>
+                            <li>📱 <strong>Prova con codici veri</strong> da prodotti fisici</li>
+                            <li>🛒 <strong>Codici da confezioni</strong> di cibo, libri, farmaci</li>
+                            <li>📄 <strong>Evita codici stampati</strong> da casa (spesso non validi)</li>
+                            <li>🎯 <strong>Scanner Semplice</strong> = configurazione minimale per test</li>
                         </ul>
-                        <div style="background: #e3f2fd; padding: 10px; margin-top: 10px; border-radius: 5px; font-size: 0.9em;">
-                            <strong>💡 Se non funziona:</strong> Prova prima con un codice grande e ben stampato
+                        <div style="background: #f8d7da; padding: 10px; margin-top: 10px; border-radius: 5px; font-size: 0.9em; border-left: 3px solid #dc3545;">
+                            <strong>🚨 Problema rilevato:</strong> Il codice che hai stampato potrebbe non essere un vero Code 128 valido. Prova con prodotti reali!
                         </div>
                     </div>
                     
@@ -473,6 +471,9 @@
                         </button>
                         <button class="btn" onclick="debugScanner()" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
                             🐛 Debug Scanner
+                        </button>
+                        <button class="btn" onclick="trySimpleScanner()" style="background: linear-gradient(135deg, #17a2b8, #138496);">
+                            🚀 Scanner Semplice
                         </button>
                     </div>
                 </div>
