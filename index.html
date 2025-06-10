@@ -439,16 +439,18 @@
                 <div class="camera-section">
                     <h4>📷 Scanner Codice a Barre</h4>
                     
-                    <div class="scanner-tips" style="background: #fff3cd; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid #ffc107;">
-                        <strong>⚠️ IMPORTANTE - Test con codici veri:</strong>
+                    <div class="scanner-tips" style="background: #d1ecf1; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid #17a2b8;">
+                        <strong>🔆 MIGLIORARE L'ILLUMINAZIONE - TRUCCHI:</strong>
                         <ul style="margin-top: 8px; text-align: left; font-size: 0.9em;">
-                            <li>📱 <strong>Prova con codici veri</strong> da prodotti fisici</li>
-                            <li>🛒 <strong>Codici da confezioni</strong> di cibo, libri, farmaci</li>
-                            <li>📄 <strong>Evita codici stampati</strong> da casa (spesso non validi)</li>
-                            <li>🎯 <strong>Scanner Semplice</strong> = configurazione minimale per test</li>
+                            <li>💡 <strong>Luce diretta dall'alto</strong> - lampada o luce del soffitto</li>
+                            <li>🔦 <strong>Flash del telefono</strong> - attiva la torcia se disponibile</li>
+                            <li>🪟 <strong>Vicino alla finestra</strong> - luce naturale è ottima</li>
+                            <li>📱 <strong>Evita ombre</strong> - non coprire il codice con le mani</li>
+                            <li>⏰ <strong>Tieni FERMO 5+ secondi</strong> - più tempo = migliore lettura</li>
+                            <li>📏 <strong>Distanza 20cm</strong> - né troppo vicino né troppo lontano</li>
                         </ul>
-                        <div style="background: #f8d7da; padding: 10px; margin-top: 10px; border-radius: 5px; font-size: 0.9em; border-left: 3px solid #dc3545;">
-                            <strong>🚨 Problema rilevato:</strong> Il codice che hai stampato potrebbe non essere un vero Code 128 valido. Prova con prodotti reali!
+                        <div style="background: #d4edda; padding: 10px; margin-top: 10px; border-radius: 5px; font-size: 0.9em; border-left: 3px solid #28a745;">
+                            <strong>🎯 STAI ANDANDO BENE!</strong> Lo scanner rileva i codici, serve solo più luce/stabilità
                         </div>
                     </div>
                     
@@ -686,8 +688,8 @@
                             console.log(`📋 Formato: ${format}`);
                             console.log(`📊 Confidenza: ${confidence}`);
                             
-                            // Accetta codici con confidenza ragionevole
-                            if (confidence >= 30) {
+                            // Accetta codici con confidenza ragionevole - RIDOTTA per test
+                            if (confidence >= 15) { // Era 30, ora 15 - più permissivo
                                 showStatus(`🎉 CODICE TROVATO: ${code} (${format}, confidenza: ${confidence})`, 'success');
                                 
                                 // Vibrazione di successo
@@ -719,8 +721,8 @@
                                 }, 3000);
                                 
                             } else {
-                                console.log(`⚠️ Codice scartato: confidenza troppo bassa (${confidence})`);
-                                showStatus(`📷 Codice rilevato ma poco chiaro (${confidence}%) - riprova con migliore illuminazione`, 'error');
+                                console.log(`⚠️ Codice rilevato ma bassa confidenza: ${confidence}%`);
+                                showStatus(`📷 QUASI! Codice rilevato (${confidence}%) - prova con: 🔆 PIÙ LUCE DIRETTA 📱 TIENI PIÙ FERMO ⏱️ 5 SECONDI`, 'error');
                             }
                         } catch (error) {
                             console.error('Errore nel processare il codice:', error);
