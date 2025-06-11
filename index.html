@@ -519,6 +519,11 @@
                     </svg>
                     Scansiona Codice a Barre
                 </button>
+                
+                <!-- Pulsante di test per debug -->
+                <button onclick="testBasicFunctionality()" style="margin-top: 10px; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 5px; width: 100%; cursor: pointer;">
+                    🧪 Test Debug (Controlla Console)
+                </button>
             </div>
             
             <div id="video-container">
@@ -533,7 +538,8 @@
                     Centra il codice a barre nel riquadro e scatta una foto
                 </div>
                 <div class="capture-controls">
-                    <button class="capture-button" onclick="capturePhoto()">📸 Scatta Foto</button>
+                    <button class="capture-button" onclick="captureSimplePhoto()" style="background: #17a2b8;">📷 Scatta Foto Semplice</button>
+                    <button class="capture-button" onclick="captureAndProcessPhoto()">📸 Scatta e Analizza OCR</button>
                     <button class="stop-scan" onclick="stopCamera()">❌ Chiudi</button>
                 </div>
                 <img id="photoPreview" alt="Foto catturata">
@@ -558,138 +564,190 @@
         let productsData = [];
         let currentStream = null;
         
-        // Funzione per catturare e processare foto con OCR
-        async function capturePhoto() {
+        // Funzione unificata: scatta foto e processa con OCR
+        async function captureAndProcessPhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.createElement('canvas');
+            const captureButton = document.querySelector('.capture-button');
+            
+            // Disabilita il pulsante durante l'elaborazione
+            captureButton.disabled = true;
+            captureButton.innerHTML = '⏳ Elaborazione in corso...';
+            
+            // Cattura frame dal video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0);
+            
+            // Mostra preview
+            const photoPreview = document.getElementById('photoPreview');
+            photoPreview.src = canvas.toDataURL('image/jpeg', 0.95);
+            photoPreview.style.display = 'block';
+            
+            // Mostra stato elaborazione
+            document.getElementById('captureInstructions').innerHTML = 
+                '<div class="loading"><div class="loading-spinner"></div>Analizzando il codice a barre...</div>';
+            document.getElementById('captureInstructions').style.display = 'block';
+            
+            try {
+                // Inizializza Tesseract
+                const worker = await Tesseract.createWorker({
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            const progress = Math.round(m.progress * 100);
+                            document.getElementById('captureInstructions').innerHTML = 
+                                `<div class="loading"><div class="loading-spinner"></div>Analisi OCR: ${progress}%</div>`;
+                        }
+                    }
+                });
+                
+                await worker.loadLanguage('eng');
+                await worker.initialize('eng');
+                
+                // Preprocessa l'immagine
+                const processedCanvas = preprocessImageForBarcode(canvas);
+                
+                // Configura per numeri e lettere comuni nei codici
+                await worker.setParameters({
+                    tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-',
+                    tessedit_pageseg_mode: Tesseract.PSM.SPARSE_TEXT
+                });
+                
+                // Esegui OCR
+                const { data: { text, confidence } } = await worker.recognize(processedCanvas);
+                await worker.terminate();
+                
+                console.log('Testo rilevato:', text, 'Confidenza:', confidence);
+                
+                // Cerca codici nel testo
+                const possibleCodes = extractBarcodes(text);
+                
+                if (possibleCodes.length > 0) {
+                    // Prova ogni codice trovato
+                    let foundProduct = null;
+                    let matchedCode = null;
+                    
+                    for (const code of possibleCodes) {
+                        const product = searchProduct(code);
+                        if (product) {
+                            foundProduct = product;
+                            matchedCode = code;
+                            break;
+                        }
+                    }
+                    
+                    if (foundProduct) {
+                        // Prodotto trovato!
+                        document.getElementById('searchInput').value = matchedCode;
+                        showResult(foundProduct);
+                        document.getElementById('captureInstructions').innerHTML = 
+                            `<div style="color: #28a745;">✅ Prodotto trovato! Codice: ${matchedCode}</div>`;
+                        
+                        // Vibrazione successo
+                        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                        
+                        // Chiudi camera dopo 2 secondi
+                        setTimeout(() => stopCamera(), 2000);
+                    } else {
+                        // Codici trovati ma nessuna corrispondenza
+                        document.getElementById('captureInstructions').innerHTML = 
+                            `<div style="color: #ff6b6b;">🔍 Codici rilevati: ${possibleCodes.join(', ')}<br>
+                            Nessuna corrispondenza trovata. Verifica il codice.</div>`;
+                    }
+                } else {
+                    // Nessun codice rilevato
+                    document.getElementById('captureInstructions').innerHTML = 
+                        '<div style="color: #ff6b6b;">❌ Nessun codice rilevato. Assicurati che il codice sia ben visibile e riprova.</div>';
+                }
+                
+            } catch (error) {
+                console.error('Errore OCR:', error);
+                document.getElementById('captureInstructions').innerHTML = 
+                    '<div style="color: #ff6b6b;">❌ Errore nell\'analisi. Riprova o inserisci manualmente.</div>';
+            }
+            
+            // Riabilita il pulsante
+            captureButton.disabled = false;
+            captureButton.innerHTML = '📸 Scatta e Analizza';
+        }
+        
+        // Preprocessamento ottimizzato per codici a barre
+        function preprocessImageForBarcode(canvas) {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const ctx = tempCanvas.getContext('2d');
+            
+            // Copia immagine originale
+            ctx.drawImage(canvas, 0, 0);
+            
+            // Ottieni dati immagine
+            const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            const data = imageData.data;
+            
+            // 1. Converti in scala di grigi
+            for (let i = 0; i < data.length; i += 4) {
+                const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+                data[i] = gray;
+                data[i + 1] = gray;
+                data[i + 2] = gray;
+            }
+            
+            // 2. Aumenta contrasto
+            const contrast = 30;
+            const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = factor * (data[i] - 128) + 128;
+                data[i + 1] = factor * (data[i + 1] - 128) + 128;
+                data[i + 2] = factor * (data[i + 2] - 128) + 128;
+            }
+            
+            // 3. Binarizzazione con soglia adattiva
+            const threshold = 128;
+            for (let i = 0; i < data.length; i += 4) {
+                const value = data[i] > threshold ? 255 : 0;
+                data[i] = value;
+                data[i + 1] = value;
+                data[i + 2] = value;
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            return tempCanvas;
+        }
+        
+        // Test semplificato per debug
+        async function testBasicFunctionality() {
+            console.log('=== TEST DEBUG ===');
+            console.log('Prodotti caricati:', productsData.length);
+            if (productsData.length > 0) {
+                console.log('Primo prodotto:', productsData[0]);
+                console.log('Codici disponibili:', productsData.slice(0, 5).map(p => p.Articolo));
+            }
+        }
+        
+        // Versione semplificata senza OCR per test
+        function captureSimplePhoto() {
             const video = document.getElementById('video');
             const canvas = document.createElement('canvas');
             
-            // Usa risoluzione completa del video
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             
             const context = canvas.getContext('2d');
             context.drawImage(video, 0, 0);
             
-            // Mostra preview della foto catturata
+            // Mostra solo la foto
             const photoPreview = document.getElementById('photoPreview');
             photoPreview.src = canvas.toDataURL('image/jpeg', 0.95);
             photoPreview.style.display = 'block';
             
-            // Mostra loading
-            document.getElementById('captureInstructions').innerHTML = '⏳ Analizzando l\'immagine...';
+            // Istruzioni semplificate
+            document.getElementById('captureInstructions').innerHTML = 
+                '<div style="color: #007bff;">📝 Inserisci manualmente il codice che vedi nella foto nel campo di ricerca sopra.</div>';
             document.getElementById('captureInstructions').style.display = 'block';
             
-            // Processa con OCR
-            try {
-                await processWithOCR(canvas);
-            } catch (error) {
-                console.error('Errore OCR:', error);
-                document.getElementById('captureInstructions').innerHTML = '❌ OCR fallito. Inserisci il codice manualmente.';
-            }
-            
-            return canvas;
-        }
-        
-        // Processa immagine con Tesseract OCR
-        async function processWithOCR(canvas) {
-            // Preprocessa l'immagine per migliorare OCR
-            const processedCanvas = preprocessImage(canvas);
-            
-            try {
-                const result = await Tesseract.recognize(
-                    processedCanvas,
-                    'eng',
-                    {
-                        logger: m => console.log(m),
-                        tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
-                    }
-                );
-                
-                // Estrai possibili codici dal testo
-                const text = result.data.text;
-                const possibleCodes = extractPossibleCodes(text);
-                
-                if (possibleCodes.length > 0) {
-                    // Prova ogni codice trovato
-                    let foundProduct = null;
-                    for (const code of possibleCodes) {
-                        const product = searchProduct(code);
-                        if (product) {
-                            foundProduct = product;
-                            document.getElementById('searchInput').value = code;
-                            showResult(product);
-                            break;
-                        }
-                    }
-                    
-                    if (!foundProduct) {
-                        document.getElementById('captureInstructions').innerHTML = 
-                            `🔍 Codici trovati: ${possibleCodes.join(', ')}<br>Nessuna corrispondenza. Verifica e inserisci manualmente.`;
-                    } else {
-                        document.getElementById('captureInstructions').innerHTML = 
-                            `✅ Prodotto trovato!`;
-                    }
-                } else {
-                    document.getElementById('captureInstructions').innerHTML = 
-                        '❌ Nessun codice rilevato. Riprova o inserisci manualmente.';
-                }
-                
-            } catch (error) {
-                throw error;
-            }
-        }
-        
-        // Preprocessa immagine per migliorare OCR
-        function preprocessImage(canvas) {
-            const ctx = canvas.getContext('2d');
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            
-            // Converti in bianco e nero con soglia
-            for (let i = 0; i < data.length; i += 4) {
-                const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                const threshold = 128;
-                const value = avg > threshold ? 255 : 0;
-                data[i] = value;     // R
-                data[i + 1] = value; // G
-                data[i + 2] = value; // B
-            }
-            
-            // Aumenta contrasto
-            const factor = 2;
-            for (let i = 0; i < data.length; i += 4) {
-                data[i] = Math.min(255, (data[i] - 128) * factor + 128);
-                data[i + 1] = Math.min(255, (data[i + 1] - 128) * factor + 128);
-                data[i + 2] = Math.min(255, (data[i + 2] - 128) * factor + 128);
-            }
-            
-            ctx.putImageData(imageData, 0, 0);
-            return canvas;
-        }
-        
-        // Estrai possibili codici dal testo OCR
-        function extractPossibleCodes(text) {
-            const codes = [];
-            
-            // Pattern comuni per codici prodotto
-            const patterns = [
-                /\b[A-Z]\d{9}\b/g,          // A seguito da 9 cifre
-                /\b\d{13}\b/g,              // EAN-13 (13 cifre)
-                /\b\d{8}\b/g,               // EAN-8 (8 cifre)
-                /\b[A-Z0-9]{8,12}\b/g,      // Codici alfanumerici
-                /\b\d{12}\b/g,              // UPC (12 cifre)
-            ];
-            
-            // Cerca pattern nel testo
-            patterns.forEach(pattern => {
-                const matches = text.match(pattern);
-                if (matches) {
-                    codes.push(...matches);
-                }
-            });
-            
-            // Rimuovi duplicati
-            return [...new Set(codes)];
+            console.log('Foto catturata, dimensioni:', canvas.width, 'x', canvas.height);
         }
         
         // Gestione upload file Excel
