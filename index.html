@@ -3,915 +3,995 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner Codici a Barre - Controllo Sconti</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/zxing-library/0.20.0/umd/index.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>Scanner Prezzi Prodotti</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-        
+
         .container {
-            max-width: 800px;
+            max-width: 500px;
             margin: 0 auto;
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
-        
+
         .header {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 30px;
             text-align: center;
         }
-        
+
         .header h1 {
-            font-size: 2.5em;
+            font-size: 24px;
             margin-bottom: 10px;
-            font-weight: 300;
         }
-        
+
         .header p {
-            font-size: 1.1em;
             opacity: 0.9;
+            font-size: 14px;
         }
-        
-        .main-content {
+
+        .content {
             padding: 30px;
         }
-        
-        .upload-section {
+
+        .file-upload-section {
             background: #f8f9fa;
-            border: 3px dashed #dee2e6;
+            border: 2px dashed #667eea;
             border-radius: 15px;
             padding: 30px;
             text-align: center;
             margin-bottom: 30px;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
         }
-        
-        .upload-section:hover {
-            border-color: #007bff;
-            background: #e3f2fd;
+
+        .file-upload-section.has-file {
+            background: #e8f4fd;
+            border-style: solid;
         }
-        
-        .upload-section.loaded {
-            border-color: #28a745;
-            background: #d4edda;
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
         }
-        
+
         .file-input {
-            display: none;
-        }
-        
-        .upload-btn {
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 25px;
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
             cursor: pointer;
-            font-size: 1.1em;
-            transition: all 0.3s ease;
-            margin-bottom: 15px;
         }
-        
-        .upload-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0,123,255,0.3);
+
+        .file-label {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
         }
-        
-        .manual-input-section {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
+
+        .file-label:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        .file-info {
+            margin-top: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .file-loaded {
+            color: #28a745;
+            font-weight: 500;
+        }
+
+        .search-section {
+            margin-bottom: 30px;
+            opacity: 0.5;
+            pointer-events: none;
+            transition: all 0.3s;
+        }
+
+        .search-section.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .input-group {
+            position: relative;
             margin-bottom: 20px;
-            border: 2px solid #e9ecef;
         }
-        
-        .manual-input-section h4 {
-            margin-bottom: 15px;
-            color: #495057;
-            font-size: 1.2em;
+
+        .search-input {
+            width: 100%;
+            padding: 15px 45px 15px 20px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
         }
-        
-        .input-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
-        
-        .code-input {
-            flex: 1;
-            min-width: 250px;
-            padding: 15px;
-            border: 2px solid #dee2e6;
-            border-radius: 25px;
-            font-size: 1.1em;
+
+        .search-input:focus {
             outline: none;
-            transition: all 0.3s ease;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
-        
-        .code-input:disabled {
-            background-color: #e9ecef;
-            color: #6c757d;
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+            cursor: pointer;
+        }
+
+        .scan-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .scan-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .scan-button:active {
+            transform: translateY(0);
+        }
+
+        .scan-button:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
         }
-        
-        .code-input:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
-        }
-        
-        .search-btn {
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            white-space: nowrap;
-            min-width: 120px;
-        }
-        
-        .search-btn:hover {
-            box-shadow: 0 8px 16px rgba(0,123,255,0.3);
-        }
-        
-        .input-help {
-            font-size: 0.9em;
-            color: #6c757d;
-            margin: 0;
-            font-style: italic;
-        }
-        
-        .divider {
-            text-align: center;
-            margin: 30px 0;
+
+        #video-container {
+            display: none;
             position: relative;
-        }
-        
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #dee2e6;
-        }
-        
-        .divider span {
-            background: white;
-            padding: 0 20px;
-            color: #6c757d;
-            font-weight: bold;
-            font-size: 0.9em;
-        }
-        
-        .camera-section {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
-            border: 2px solid #e9ecef;
-        }
-        
-        .camera-section h4 {
-            margin-bottom: 15px;
-            color: #495057;
-            font-size: 1.2em;
-        }
-        
-        .scanner-section {
-            margin: 30px 0;
-            text-align: center;
-        }
-        
-        .camera-container {
-            position: relative;
-            max-width: 500px;
-            margin: 0 auto;
-            border-radius: 15px;
+            margin: 20px 0;
+            border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        
-        #scanner {
-            width: 100%;
-            height: 300px;
             background: #000;
         }
-        
-        .scanner-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 200px;
-            height: 100px;
-            border: 2px solid #ff6b6b;
-            border-radius: 10px;
-            box-shadow: 0 0 0 99999px rgba(0,0,0,0.3);
+
+        #video {
+            width: 100%;
+            height: auto;
+            display: block;
         }
-        
-        .scanner-line {
+
+        #scannerCanvas {
             position: absolute;
-            top: 50%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .scan-area-indicator {
+            position: absolute;
+            top: 20%;
+            left: 10%;
+            right: 10%;
+            bottom: 20%;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .scan-area-corners {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #00ff00;
+        }
+
+        .scan-area-corners.top-left {
+            top: -2px;
+            left: -2px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .scan-area-corners.top-right {
+            top: -2px;
+            right: -2px;
+            border-left: none;
+            border-bottom: none;
+        }
+
+        .scan-area-corners.bottom-left {
+            bottom: -2px;
+            left: -2px;
+            border-right: none;
+            border-top: none;
+        }
+
+        .scan-area-corners.bottom-right {
+            bottom: -2px;
+            right: -2px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .scan-instructions {
+            position: absolute;
+            bottom: 10%;
             left: 0;
             right: 0;
+            text-align: center;
+            color: white;
+            font-size: 14px;
+            text-shadow: 0 0 4px rgba(0,0,0,0.8);
+            z-index: 10;
+        }
+
+        .stop-scan {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            z-index: 10;
+        }
+
+        .scan-line {
+            position: absolute;
+            width: 100%;
             height: 2px;
-            background: linear-gradient(90deg, transparent, #ff6b6b, transparent);
+            background: #00ff00;
+            opacity: 0.7;
+            top: 50%;
             animation: scan 2s linear infinite;
         }
-        
+
         @keyframes scan {
-            0%, 100% { transform: translateY(-50px); }
-            50% { transform: translateY(50px); }
+            0% { transform: translateY(-100px); }
+            100% { transform: translateY(100px); }
         }
-        
-        .controls {
-            margin: 20px 0;
-        }
-        
-        .btn {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1em;
-            margin: 0 10px;
-            transition: all 0.3s ease;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(40,167,69,0.3);
-        }
-        
-        .btn:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .btn.stop {
-            background: linear-gradient(135deg, #dc3545, #c82333);
-        }
-        
-        .btn.stop:hover {
-            box-shadow: 0 8px 16px rgba(220,53,69,0.3);
-        }
-        
+
         .result-section {
-            margin-top: 30px;
+            display: none;
+            animation: slideIn 0.3s ease-out;
         }
-        
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .product-card {
-            background: linear-gradient(135deg, #ffffff, #f8f9fa);
+            background: #f8f9fa;
             border-radius: 15px;
             padding: 25px;
+            margin-top: 20px;
+        }
+
+        .product-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .product-code {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .price-section {
+            display: flex;
+            align-items: baseline;
+            gap: 15px;
             margin: 20px 0;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            border-left: 5px solid #28a745;
-            animation: slideIn 0.5s ease-out;
         }
-        
-        @keyframes slideIn {
-            from { transform: translateX(-20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+
+        .price-current {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
         }
-        
-        .product-header {
+
+        .price-original {
+            font-size: 20px;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .discount-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .product-details {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e8ed;
+        }
+
+        .detail-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
+            margin-bottom: 10px;
+            font-size: 14px;
         }
-        
-        .product-code {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #007bff;
+
+        .detail-label {
+            color: #666;
         }
-        
-        .discount-badge {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+
+        .detail-value {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .capture-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .capture-button {
+            flex: 1;
+            padding: 12px;
+            background: #28a745;
             color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
         }
-        
-        .product-description {
-            color: #495057;
-            margin-bottom: 15px;
-            font-size: 1.1em;
+
+        .capture-button:hover {
+            background: #218838;
         }
-        
-        .price-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin: 15px 0;
+
+        #photoPreview {
+            display: none;
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: 2px solid #28a745;
         }
-        
-        .price-item {
-            text-align: center;
-            padding: 15px;
-            background: rgba(0,123,255,0.1);
-            border-radius: 10px;
-        }
-        
-        .price-label {
-            font-size: 0.9em;
-            color: #6c757d;
-            margin-bottom: 5px;
-        }
-        
-        .price-value {
-            font-size: 1.4em;
-            font-weight: bold;
-            color: #007bff;
-        }
-        
-        .price-original {
-            text-decoration: line-through;
-            color: #dc3545;
-        }
-        
-        .no-result {
-            text-align: center;
-            padding: 30px;
-            background: #fff3cd;
-            border-radius: 15px;
-            border-left: 5px solid #ffc107;
-            color: #856404;
-        }
-        
-        .status {
-            text-align: center;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 10px;
-            font-weight: bold;
-        }
-        
-        .status.success {
+
+        #captureInstructions {
+            display: none;
             background: #d4edda;
             color: #155724;
-            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            text-align: center;
         }
-        
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+
+        .ocr-results {
+            background: #e8f0fe;
+            border: 1px solid #1976d2;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 14px;
         }
-        
-        .status.info {
-            background: #cce7ff;
-            color: #004085;
-            border: 1px solid #b8daff;
-        }
-        
-        @media (max-width: 768px) {
-            .header h1 { font-size: 2em; }
-            .main-content { padding: 20px; }
-            .product-header { flex-direction: column; gap: 10px; }
-            .price-info { grid-template-columns: 1fr; }
+
+        .stats {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🛒 Scanner Sconti</h1>
-            <p>Scansiona i codici a barre e controlla gli sconti disponibili</p>
+            <h1>📱 Scanner Prezzi</h1>
+            <p>Carica un file Excel e scansiona i codici</p>
         </div>
         
-        <div class="main-content">
-            <div class="upload-section" id="uploadSection">
-                <h3>📁 Carica il file Excel</h3>
-                <p>Seleziona il file con i dati dei prodotti e sconti</p>
-                <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls" />
-                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                    Scegli File Excel
+        <div class="content">
+            <!-- Sezione upload file -->
+            <div class="file-upload-section" id="fileUploadSection">
+                <div class="file-input-wrapper">
+                    <input 
+                        type="file" 
+                        id="excelFile" 
+                        class="file-input" 
+                        accept=".xlsx,.xls"
+                    >
+                    <label for="excelFile" class="file-label">
+                        📂 Carica File Excel
+                    </label>
+                </div>
+                <div class="file-info" id="fileInfo">
+                    Seleziona il file Excel con i dati dei prodotti
+                </div>
+            </div>
+
+            <!-- Sezione ricerca (disabilitata inizialmente) -->
+            <div class="search-section" id="searchSection">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        class="search-input" 
+                        placeholder="Inserisci codice articolo..."
+                        disabled
+                    >
+                    <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                </div>
+                
+                <button id="scanButton" class="scan-button" disabled>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                        <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                        <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                        <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                        <rect x="7" y="7" width="10" height="10"></rect>
+                    </svg>
+                    Scansiona Codice a Barre
                 </button>
-                <div id="fileStatus"></div>
             </div>
             
-            <div class="scanner-section">
-                <h3>🔍 Ricerca Prodotto</h3>
-                
-                <!-- Sezione inserimento manuale -->
-                <div class="manual-input-section">
-                    <h4>✍️ Inserimento Manuale</h4>
-                    <div class="input-container">
-                        <input type="text" id="manualCodeInput" placeholder="Carica prima il file Excel..." class="code-input" disabled>
-                        <button class="btn search-btn" onclick="searchManualCode()">
-                            🔍 Cerca
-                        </button>
-                        <button class="btn" onclick="forceEnableInput()" style="background: linear-gradient(135deg, #fd7e14, #e85d04);">
-                            🔓 Forza Attivazione
-                        </button>
-                    </div>
-                    <p class="input-help">Inserisci il codice a barre o il codice articolo</p>
+            <div id="video-container">
+                <video id="video" style="width: 100%;"></video>
+                <div class="scan-area-indicator">
+                    <div class="scan-area-corners top-left"></div>
+                    <div class="scan-area-corners top-right"></div>
+                    <div class="scan-area-corners bottom-left"></div>
+                    <div class="scan-area-corners bottom-right"></div>
                 </div>
-                
-                <!-- Divisore -->
-                <div class="divider">
-                    <span>OPPURE</span>
+                <div class="scan-instructions">
+                    Centra il codice a barre nel riquadro e scatta una foto
                 </div>
-                
-                <!-- Sezione scanner -->
-                <div class="camera-section">
-                    <h4>📷 Scanner Codice a Barre</h4>
-                    
-                    <div class="scanner-tips" style="background: #f3e5f5; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid #9c27b0;">
-                        <strong>🆕 NUOVE TECNOLOGIE per iPhone:</strong>
-                        <ul style="margin-top: 8px; text-align: left; font-size: 0.9em;">
-                            <li>🆕 <strong>"ZXing Scanner"</strong> - Libreria più moderna e stabile</li>
-                            <li>🏷️ <strong>"Genera Test"</strong> - Crea codice valido con JSBarcode</li>
-                            <li>📸 <strong>"Camera iPhone"</strong> - Scatta foto e analizza</li>
-                            <li>🔦 <strong>"Scanner + Torcia"</strong> - Quagga permissivo</li>
-                        </ul>
-                        <div style="background: #e8f5e8; padding: 10px; margin-top: 10px; border-radius: 5px; font-size: 0.9em; border-left: 3px solid #4caf50;">
-                            <strong>🎯 STRATEGIA CONSIGLIATA:</strong><br>
-                            1. Clicca "🏷️ Genera Test" per creare un codice valido<br>
-                            2. Usa "🆕 ZXing Scanner" per scansionarlo<br>
-                            3. Se funziona, prova con codici veri
-                        </div>
-                    </div>
-                    
-                    <div class="camera-container" id="cameraContainer" style="display: none;">
-                        <div id="scanner"></div>
-                        <div class="scanner-overlay">
-                            <div class="scanner-line"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="controls">
-                        <button class="btn" id="startBtn" onclick="startScanner()" disabled>
-                            📷 Avvia Scanner
-                        </button>
-                        <button class="btn stop" id="stopBtn" onclick="stopScanner()" style="display: none;">
-                            ⏹️ Ferma Scanner
-                        </button>
-                        <button class="btn" onclick="testCamera()" style="background: linear-gradient(135deg, #6f42c1, #5a2d91);">
-                            🔧 Test Fotocamera
-                        </button>
-                        <button class="btn" onclick="debugScanner()" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
-                            🐛 Debug Scanner
-                        </button>
-                        <button class="btn" onclick="trySimpleScanner()" style="background: linear-gradient(135deg, #17a2b8, #138496);">
-                            🔦 Scanner + Torcia
-                        </button>
-                        <button class="btn" onclick="tryNativeCamera()" style="background: linear-gradient(135deg, #ff6b6b, #ee5a52);">
-                            📱 Camera iPhone
-                        </button>
-                        <button class="btn" onclick="tryZXingScanner()" style="background: linear-gradient(135deg, #9c27b0, #7b1fa2);">
-                            🆕 ZXing Scanner
-                        </button>
-                        <button class="btn" onclick="generateTestBarcode()" style="background: linear-gradient(135deg, #ff9800, #f57c00);">
-                            🏷️ Genera Test
-                        </button>
-                    </div>
+                <div class="capture-controls">
+                    <button class="capture-button" onclick="capturePhoto()">📸 Scatta Foto</button>
+                    <button class="stop-scan" onclick="stopCamera()">❌ Chiudi</button>
                 </div>
-                
-                <div id="status"></div>
+                <img id="photoPreview" alt="Foto catturata">
+                <div id="captureInstructions">
+                    ✅ Foto catturata! Ora digita il codice che vedi nella foto nel campo di ricerca sopra.
+                </div>
             </div>
             
-            <div class="result-section" id="results"></div>
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                Ricerca in corso...
+            </div>
+            
+            <div class="error-message" id="errorMessage"></div>
+            
+            <div class="result-section" id="resultSection"></div>
         </div>
     </div>
 
     <script>
-        let excelData = [];
-        let isScanning = false;
-
-        // Gestione caricamento file Excel
-        document.getElementById('fileInput').addEventListener('change', function(e) {
+        // Variabili globali
+        let productsData = [];
+        let currentStream = null;
+        
+        // Funzione per catturare e processare foto con OCR
+        async function capturePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.createElement('canvas');
+            
+            // Usa risoluzione completa del video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0);
+            
+            // Mostra preview della foto catturata
+            const photoPreview = document.getElementById('photoPreview');
+            photoPreview.src = canvas.toDataURL('image/jpeg', 0.95);
+            photoPreview.style.display = 'block';
+            
+            // Mostra loading
+            document.getElementById('captureInstructions').innerHTML = '⏳ Analizzando l\'immagine...';
+            document.getElementById('captureInstructions').style.display = 'block';
+            
+            // Processa con OCR
+            try {
+                await processWithOCR(canvas);
+            } catch (error) {
+                console.error('Errore OCR:', error);
+                document.getElementById('captureInstructions').innerHTML = '❌ OCR fallito. Inserisci il codice manualmente.';
+            }
+            
+            return canvas;
+        }
+        
+        // Processa immagine con Tesseract OCR
+        async function processWithOCR(canvas) {
+            // Preprocessa l'immagine per migliorare OCR
+            const processedCanvas = preprocessImage(canvas);
+            
+            try {
+                const result = await Tesseract.recognize(
+                    processedCanvas,
+                    'eng',
+                    {
+                        logger: m => console.log(m),
+                        tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+                    }
+                );
+                
+                // Estrai possibili codici dal testo
+                const text = result.data.text;
+                const possibleCodes = extractPossibleCodes(text);
+                
+                if (possibleCodes.length > 0) {
+                    // Prova ogni codice trovato
+                    let foundProduct = null;
+                    for (const code of possibleCodes) {
+                        const product = searchProduct(code);
+                        if (product) {
+                            foundProduct = product;
+                            document.getElementById('searchInput').value = code;
+                            showResult(product);
+                            break;
+                        }
+                    }
+                    
+                    if (!foundProduct) {
+                        document.getElementById('captureInstructions').innerHTML = 
+                            `🔍 Codici trovati: ${possibleCodes.join(', ')}<br>Nessuna corrispondenza. Verifica e inserisci manualmente.`;
+                    } else {
+                        document.getElementById('captureInstructions').innerHTML = 
+                            `✅ Prodotto trovato!`;
+                    }
+                } else {
+                    document.getElementById('captureInstructions').innerHTML = 
+                        '❌ Nessun codice rilevato. Riprova o inserisci manualmente.';
+                }
+                
+            } catch (error) {
+                throw error;
+            }
+        }
+        
+        // Preprocessa immagine per migliorare OCR
+        function preprocessImage(canvas) {
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            // Converti in bianco e nero con soglia
+            for (let i = 0; i < data.length; i += 4) {
+                const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                const threshold = 128;
+                const value = avg > threshold ? 255 : 0;
+                data[i] = value;     // R
+                data[i + 1] = value; // G
+                data[i + 2] = value; // B
+            }
+            
+            // Aumenta contrasto
+            const factor = 2;
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = Math.min(255, (data[i] - 128) * factor + 128);
+                data[i + 1] = Math.min(255, (data[i + 1] - 128) * factor + 128);
+                data[i + 2] = Math.min(255, (data[i + 2] - 128) * factor + 128);
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            return canvas;
+        }
+        
+        // Estrai possibili codici dal testo OCR
+        function extractPossibleCodes(text) {
+            const codes = [];
+            
+            // Pattern comuni per codici prodotto
+            const patterns = [
+                /\b[A-Z]\d{9}\b/g,          // A seguito da 9 cifre
+                /\b\d{13}\b/g,              // EAN-13 (13 cifre)
+                /\b\d{8}\b/g,               // EAN-8 (8 cifre)
+                /\b[A-Z0-9]{8,12}\b/g,      // Codici alfanumerici
+                /\b\d{12}\b/g,              // UPC (12 cifre)
+            ];
+            
+            // Cerca pattern nel testo
+            patterns.forEach(pattern => {
+                const matches = text.match(pattern);
+                if (matches) {
+                    codes.push(...matches);
+                }
+            });
+            
+            // Rimuovi duplicati
+            return [...new Set(codes)];
+        }
+        
+        // Gestione upload file Excel
+        document.getElementById('excelFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, {type: 'array'});
-                        const firstSheetName = workbook.SheetNames[0];
-                        const worksheet = workbook.Sheets[firstSheetName];
-                        const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
-                        
-                        // Salva i dati (salta la riga dell'intestazione)
-                        excelData = jsonData.slice(1);
-                        
-                        console.log('📊 File Excel caricato con', excelData.length, 'prodotti');
-                        
-                        showStatus(`✅ File caricato con successo! ${excelData.length} prodotti trovati.`, 'success');
-                        document.getElementById('uploadSection').classList.add('loaded');
-                        document.getElementById('fileStatus').innerHTML = `<p style="color: #28a745; margin-top: 10px;">📊 ${excelData.length} prodotti caricati</p>`;
-                        
-                        // Abilita controlli
-                        enableControls();
-                        
-                    } catch (error) {
-                        showStatus('❌ Errore nel caricamento del file Excel', 'error');
-                        console.error('Errore:', error);
+                loadExcelFile(file);
+            }
+        });
+        
+        // Carica e processa il file Excel
+        function loadExcelFile(file) {
+            const reader = new FileReader();
+            
+            document.getElementById('fileInfo').innerHTML = '⏳ Caricamento in corso...';
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Prendi il primo foglio
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Converti in JSON
+                    productsData = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    // Mostra info sul file caricato
+                    document.getElementById('fileUploadSection').classList.add('has-file');
+                    document.getElementById('fileInfo').innerHTML = `
+                        <span class="file-loaded">✅ File caricato con successo!</span><br>
+                        <div class="stats">
+                            📊 ${productsData.length} prodotti trovati<br>
+                            📁 File: ${file.name}
+                        </div>
+                    `;
+                    
+                    // Abilita la sezione di ricerca
+                    enableSearchSection();
+                    
+                } catch (error) {
+                    console.error('Errore nel caricamento del file:', error);
+                    document.getElementById('fileInfo').innerHTML = 
+                        '<span style="color: #c33;">❌ Errore nel caricamento del file. Verifica che sia un file Excel valido.</span>';
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+        
+        // Abilita la sezione di ricerca
+        function enableSearchSection() {
+            const searchSection = document.getElementById('searchSection');
+            const searchInput = document.getElementById('searchInput');
+            const scanButton = document.getElementById('scanButton');
+            
+            searchSection.classList.add('active');
+            searchInput.disabled = false;
+            scanButton.disabled = false;
+            
+            // Focus sul campo di ricerca
+            searchInput.focus();
+        }
+        
+        // Cerca prodotto per codice
+        function searchProduct(code) {
+            if (!code) return null;
+            
+            // Rimuovi spazi e converti in minuscolo per il confronto
+            const cleanCode = code.toString().trim().toLowerCase();
+            
+            return productsData.find(product => {
+                if (!product.Articolo) return false;
+                const productCode = product.Articolo.toString().trim().toLowerCase();
+                return productCode === cleanCode;
+            });
+        }
+        
+        // Mostra risultato
+        function showResult(product) {
+            if (!product) {
+                showError('Prodotto non trovato');
+                return;
+            }
+            
+            const resultHTML = `
+                <div class="product-card">
+                    <div class="product-title">${product.Descrizione || 'Prodotto'}</div>
+                    <div class="product-code">Codice: ${product.Articolo}</div>
+                    
+                    <div class="price-section">
+                        <div class="price-current">€${parseFloat(product.PrezzoNetto).toFixed(2)}</div>
+                        ${product.PrezzoListino ? `<div class="price-original">€${parseFloat(product.PrezzoListino).toFixed(2)}</div>` : ''}
+                        ${product['ValorePromo%'] ? `<div class="discount-badge">${product['ValorePromo%']}</div>` : ''}
+                    </div>
+                    
+                    <div class="product-details">
+                        ${product.DataValidità ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Valido fino al:</span>
+                            <span class="detail-value">${product.DataValidità}</span>
+                        </div>
+                        ` : ''}
+                        ${product.Stagione ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Stagione:</span>
+                            <span class="detail-value">${product.Stagione}</span>
+                        </div>
+                        ` : ''}
+                        ${product.TipoPromo ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Tipo Promo:</span>
+                            <span class="detail-value">${product.TipoPromo}</span>
+                        </div>
+                        ` : ''}
+                        ${product.Negozio ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Negozio:</span>
+                            <span class="detail-value">${product.Negozio}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('resultSection').innerHTML = resultHTML;
+            document.getElementById('resultSection').style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+        
+        // Mostra errore
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('resultSection').style.display = 'none';
+        }
+        
+        // Nasconde messaggi
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        // Gestione ricerca manuale
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const code = e.target.value.trim();
+            if (code) {
+                hideMessages();
+                document.getElementById('loading').style.display = 'block';
+                
+                setTimeout(() => {
+                    const product = searchProduct(code);
+                    document.getElementById('loading').style.display = 'none';
+                    if (product) {
+                        showResult(product);
+                    } else if (code.length >= 3) {
+                        showError('Prodotto non trovato');
+                    }
+                }, 300);
+            } else {
+                hideMessages();
+            }
+        });
+        
+        // Gestione scanner/camera
+        document.getElementById('scanButton').addEventListener('click', async function() {
+            // Prima controlla se il browser supporta BarcodeDetector (solo Chrome/Edge Android)
+            if ('BarcodeDetector' in window) {
+                const formats = await BarcodeDetector.getSupportedFormats();
+                if (formats.length > 0) {
+                    startNativeBarcodeScanner();
+                    return;
+                }
+            }
+            
+            // Altrimenti usa la camera per foto assistita
+            startCameraForPhoto();
+        });
+        
+        // Scanner nativo (Chrome/Edge Android)
+        async function startNativeBarcodeScanner() {
+            hideMessages();
+            document.getElementById('video-container').style.display = 'block';
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                });
+                
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                currentStream = stream;
+                
+                const barcodeDetector = new BarcodeDetector({
+                    formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e']
+                });
+                
+                // Scansiona continuamente
+                const detectLoop = async () => {
+                    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                        try {
+                            const barcodes = await barcodeDetector.detect(video);
+                            if (barcodes.length > 0) {
+                                const code = barcodes[0].rawValue;
+                                console.log('Codice rilevato (nativo):', code);
+                                
+                                if (navigator.vibrate) navigator.vibrate(200);
+                                
+                                document.getElementById('searchInput').value = code;
+                                const product = searchProduct(code);
+                                
+                                if (product) {
+                                    showResult(product);
+                                    stopCamera();
+                                } else {
+                                    showError(`Prodotto con codice "${code}" non trovato`);
+                                }
+                            }
+                        } catch (err) {
+                            console.error('Errore rilevamento:', err);
+                        }
+                    }
+                    
+                    if (currentStream) {
+                        requestAnimationFrame(detectLoop);
                     }
                 };
-                reader.readAsArrayBuffer(file);
-            }
-        });
-
-        function enableControls() {
-            const startBtn = document.getElementById('startBtn');
-            const manualInput = document.getElementById('manualCodeInput');
-            
-            if (startBtn) {
-                startBtn.disabled = false;
-                console.log('✅ Scanner abilitato');
-            }
-            
-            if (manualInput) {
-                manualInput.disabled = false;
-                manualInput.placeholder = "Inserisci il codice del prodotto...";
-                manualInput.style.backgroundColor = '#ffffff';
-                manualInput.style.color = '#495057';
-                console.log('✅ Campo manuale abilitato');
-            }
-        }
-
-        function forceEnableInput() {
-            const input = document.getElementById('manualCodeInput');
-            input.disabled = false;
-            input.placeholder = "Campo forzatamente abilitato!";
-            input.style.backgroundColor = '#ffffff';
-            input.style.color = '#495057';
-            input.focus();
-            showStatus('🔓 Campo di input abilitato forzatamente', 'info');
-        }
-
-        function showStatus(message, type = 'info') {
-            const statusDiv = document.getElementById('status');
-            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
-        }
-
-        function searchManualCode() {
-            const codeInput = document.getElementById('manualCodeInput');
-            const code = codeInput.value.trim();
-            
-            console.log('🔍 Ricerca manuale:', code);
-            
-            if (!code) {
-                showStatus('⚠️ Inserisci un codice da cercare!', 'error');
-                codeInput.focus();
-                return;
-            }
-            
-            if (excelData.length === 0) {
-                showStatus('⚠️ Carica prima il file Excel!', 'error');
-                return;
-            }
-            
-            showStatus(`🔍 Ricerca in corso per: ${code}`, 'info');
-            searchProduct(code);
-            
-            // Pulisci il campo input dopo la ricerca
-            codeInput.value = '';
-        }
-
-        // Enter key per ricerca
-        document.addEventListener('DOMContentLoaded', function() {
-            const codeInput = document.getElementById('manualCodeInput');
-            if (codeInput) {
-                codeInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        searchManualCode();
-                    }
-                });
-            }
-        });
-
-        function startScanner() {
-            if (excelData.length === 0) {
-                showStatus('⚠️ Carica prima il file Excel!', 'error');
-                return;
-            }
-
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                showStatus('❌ Il tuo browser non supporta l\'accesso alla fotocamera', 'error');
-                return;
-            }
-
-            showStatus('📷 Avvio scanner ottimizzato per codici a barre...', 'info');
-
-            navigator.mediaDevices.getUserMedia({ 
-                video: { 
-                    facingMode: 'environment',
-                    width: { ideal: 800 },
-                    height: { ideal: 600 }
-                } 
-            })
-                .then(function(stream) {
-                    console.log('Fotocamera attivata per riconoscimento codici');
-                    document.getElementById('cameraContainer').style.display = 'block';
-                    document.getElementById('startBtn').style.display = 'none';
-                    document.getElementById('stopBtn').style.display = 'inline-block';
-                    
-                    // Configurazione SEMPLIFICATA per migliore riconoscimento
-                    Quagga.init({
-                        inputStream: {
-                            name: "Live",
-                            type: "LiveStream",
-                            target: document.querySelector('#scanner'),
-                            constraints: {
-                                width: 800,
-                                height: 600,
-                                facingMode: "environment"
-                            },
-                            singleChannel: false // Usa tutti i canali colore
-                        },
-                        decoder: {
-                            readers: [
-                                "code_128_reader", // Il più comune
-                                "ean_reader",      // EAN-13
-                                "ean_8_reader",    // EAN-8
-                                "code_39_reader"   // Code 39
-                            ]
-                        },
-                        locator: {
-                            patchSize: "medium",
-                            halfSample: true
-                        },
-                        numOfWorkers: navigator.hardwareConcurrency || 4,
-                        frequency: 10,
-                        locate: true
-                    }, function(err) {
-                        if (err) {
-                            console.log('Errore Quagga:', err);
-                            showStatus('❌ Errore scanner: ' + err.message, 'error');
-                            return;
-                        }
-                        console.log('✅ Scanner ottimizzato inizializzato');
-                        Quagga.start();
-                        isScanning = true;
-                        showStatus('📷 SCANNER ATTIVO: Posiziona il codice a barre nel riquadro rosso', 'success');
-                        
-                        // Feedback ogni 3 secondi
-                        let scanTime = 0;
-                        const scanInterval = setInterval(() => {
-                            scanTime += 3;
-                            if (scanTime <= 30) {
-                                showStatus(`📷 Scansione in corso... ${scanTime}s - Mantieni il codice fermo e ben illuminato`, 'info');
-                            } else {
-                                clearInterval(scanInterval);
-                                showStatus('⏰ Se non funziona, prova a: 1) Avvicinare/allontanare 2) Migliorare luce 3) Tenere più fermo', 'error');
-                            }
-                        }, 3000);
-                        
-                        // Pulisci l'intervallo quando trova qualcosa
-                        Quagga.onDetected(function() {
-                            clearInterval(scanInterval);
-                        });
-                    });
-
-                    // Event listener per i codici rilevati
-                    Quagga.onDetected(function(result) {
-                        try {
-                            const code = result.codeResult.code;
-                            const format = result.codeResult.format;
-                            const confidence = Math.round(result.codeResult.confidence || 0);
-                            
-                            console.log(`🎯 CODICE RILEVATO: ${code}`);
-                            console.log(`📋 Formato: ${format}`);
-                            console.log(`📊 Confidenza: ${confidence}`);
-                            
-                            // Accetta codici con confidenza ragionevole - RIDOTTA per test
-                            if (confidence >= 15) { // Era 30, ora 15 - più permissivo
-                                showStatus(`🎉 CODICE TROVATO: ${code} (${format}, confidenza: ${confidence})`, 'success');
-                                
-                                // Vibrazione di successo
-                                if (navigator.vibrate) {
-                                    navigator.vibrate([100, 50, 100, 50, 200]);
-                                }
-                                
-                                // Effetto visivo di successo
-                                const overlay = document.querySelector('.scanner-overlay');
-                                if (overlay) {
-                                    overlay.style.borderColor = '#28a745';
-                                    overlay.style.borderWidth = '4px';
-                                    overlay.style.boxShadow = '0 0 30px #28a745';
-                                    setTimeout(() => {
-                                        overlay.style.borderColor = '#ff6b6b';
-                                        overlay.style.borderWidth = '2px';
-                                        overlay.style.boxShadow = '0 0 0 99999px rgba(0,0,0,0.3)';
-                                    }, 2000);
-                                }
-                                
-                                // Cerca il prodotto
-                                searchProduct(code);
-                                
-                                // Pausa la scansione per evitare letture multiple
-                                setTimeout(() => {
-                                    if (isScanning) {
-                                        showStatus('📷 Scanner pronto per il prossimo codice', 'info');
-                                    }
-                                }, 3000);
-                                
-                            } else {
-                                console.log(`⚠️ Codice rilevato ma bassa confidenza: ${confidence}%`);
-                                showStatus(`📷 QUASI! Codice rilevato (${confidence}%) - prova con: 🔆 PIÙ LUCE DIRETTA 📱 TIENI PIÙ FERMO ⏱️ 5 SECONDI`, 'error');
-                            }
-                        } catch (error) {
-                            console.error('Errore nel processare il codice:', error);
-                            showStatus('❌ Errore nella lettura del codice', 'error');
-                        }
-                    });
-                    
-                    // Event listener per gli errori di processing
-                    Quagga.onProcessed(function(result) {
-                        if (result && result.boxes) {
-                            console.log('📦 Box rilevati:', result.boxes.length);
-                            // Mostra che sta analizzando
-                            if (result.boxes.length > 0) {
-                                showStatus('🔍 Analizzando pattern nel codice...', 'info');
-                            }
-                        }
-                    });
-                })
-                .catch(function(err) {
-                    console.error('Errore fotocamera:', err);
-                    let errorMessage = '❌ Errore fotocamera: ';
-                    
-                    if (err.name === 'NotAllowedError') {
-                        errorMessage += 'Permesso negato. Abilita la fotocamera nelle impostazioni.';
-                    } else if (err.name === 'NotFoundError') {
-                        errorMessage += 'Nessuna fotocamera trovata.';
-                    } else if (err.name === 'NotReadableError') {
-                        errorMessage += 'Fotocamera in uso da altra app.';
-                    } else {
-                        errorMessage += err.message;
-                    }
-                    
-                    showStatus(errorMessage, 'error');
-                });
-        }
-
-        function stopScanner() {
-            if (isScanning) {
-                Quagga.stop();
-                isScanning = false;
-                document.getElementById('cameraContainer').style.display = 'none';
-                document.getElementById('startBtn').style.display = 'inline-block';
-                document.getElementById('stopBtn').style.display = 'none';
-                showStatus('⏹️ Scanner fermato', 'info');
-            }
-        }
-
-        function testCamera() {
-            showStatus('🔧 Test fotocamera in corso...', 'info');
-            
-            navigator.mediaDevices.getUserMedia({ 
-                video: { 
-                    facingMode: 'environment',
-                    width: { ideal: 640 },
-                    height: { ideal: 480 }
-                } 
-            })
-            .then(function(stream) {
-                showStatus('✅ Fotocamera funziona!', 'success');
                 
-                const video = document.createElement('video');
+                video.onloadedmetadata = () => {
+                    detectLoop();
+                };
+                
+            } catch (err) {
+                console.error('Errore camera:', err);
+                showError('Impossibile accedere alla fotocamera');
+            }
+        }
+        
+        // Camera per cattura foto
+        async function startCameraForPhoto() {
+            hideMessages();
+            document.getElementById('video-container').style.display = 'block';
+            
+            // Mostra avviso
+            showError('Scanner automatico non disponibile su questo dispositivo. Scatta una foto del codice e inseriscilo manualmente.');
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                });
+                
+                const video = document.getElementById('video');
                 video.srcObject = stream;
-                video.play();
+                currentStream = stream;
                 
-                setTimeout(() => {
-                    stream.getTracks().forEach(track => track.stop());
-                    showStatus('✅ Test completato - fotocamera OK', 'success');
-                }, 2000);
-            })
-            .catch(function(err) {
-                console.error('Test fotocamera fallito:', err);
-                showStatus('❌ Test fotocamera fallito: ' + err.message, 'error');
-            });
-        }
-
-        function searchProduct(code) {
-            console.log('🔎 Ricerca prodotto:', code);
-            
-            const product = excelData.find(row => {
-                const articleCode = String(row[3] || '').toLowerCase();
-                const searchCode = String(code).toLowerCase();
-                
-                return articleCode.includes(searchCode) || 
-                       searchCode.includes(articleCode) ||
-                       articleCode === searchCode;
-            });
-
-            if (product) {
-                displayProduct(product, code);
-                showStatus(`✅ Prodotto trovato per: ${code}`, 'success');
-                
-                setTimeout(() => {
-                    document.getElementById('results').scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'start' 
-                    });
-                }, 100);
-            } else {
-                displayNoResult(code);
-                showStatus(`❌ Nessun prodotto trovato per: ${code}`, 'error');
+            } catch (err) {
+                console.error('Errore camera:', err);
+                showError('Impossibile accedere alla fotocamera. Inserisci il codice manualmente.');
             }
         }
-
-        function displayProduct(product, scannedCode) {
-            const [negozio, gruppo, sottogruppo, articolo, descrizione, dataValidita, tipoPromo, valuta, prezzoNetto, prezzoListino, valorePromo, stagione] = product;
-            
-            const resultsDiv = document.getElementById('results');
-            const productHtml = `
-                <div class="product-card">
-                    <div class="product-header">
-                        <div class="product-code">🏷️ ${articolo}</div>
-                        <div class="discount-badge">-${valorePromo}</div>
-                    </div>
-                    
-                    <div class="product-description">
-                        <strong>${descrizione}</strong>
-                    </div>
-                    
-                    <div class="price-info">
-                        <div class="price-item">
-                            <div class="price-label">Prezzo Originale</div>
-                            <div class="price-value price-original">€${prezzoListino}</div>
-                        </div>
-                        <div class="price-item">
-                            <div class="price-label">Prezzo Scontato</div>
-                            <div class="price-value">€${prezzoNetto}</div>
-                        </div>
-                        <div class="price-item">
-                            <div class="price-label">Risparmi</div>
-                            <div class="price-value" style="color: #28a745;">€${(prezzoListino - prezzoNetto).toFixed(2)}</div>
-                        </div>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 15px; font-size: 0.9em; color: #6c757d;">
-                        <div>🏪 <strong>Negozio:</strong> ${negozio}</div>
-                        <div>🎯 <strong>Tipo Promo:</strong> ${tipoPromo}</div>
-                        <div>📅 <strong>Valido fino:</strong> ${dataValidita}</div>
-                        <div>🌟 <strong>Stagione:</strong> ${stagione}</div>
-                    </div>
-                    
-                    <div style="margin-top: 10px; font-size: 0.8em; color: #6c757d;">
-                        <span style="background: #e3f2fd; padding: 3px 8px; border-radius: 10px;">
-                            📱 Codice: ${scannedCode}
-                        </span>
-                    </div>
-                </div>
-            `;
-            
-            resultsDiv.innerHTML = productHtml + resultsDiv.innerHTML;
-        }
-
-        function displayNoResult(code) {
-            const resultsDiv = document.getElementById('results');
-            const noResultHtml = `
-                <div class="no-result">
-                    <h3>🔍 Prodotto non trovato</h3>
-                    <p>Il codice <strong>${code}</strong> non è presente nel database degli sconti.</p>
-                    <p style="margin-top: 10px; font-size: 0.9em;">Il prodotto potrebbe non essere in promozione o il codice potrebbe non corrispondere esattamente.</p>
-                    <div style="margin-top: 15px; font-size: 0.9em;">
-                        <strong>💡 Suggerimenti:</strong>
-                        <ul style="text-align: left; margin-top: 5px;">
-                            <li>Prova a inserire solo parte del codice</li>
-                            <li>Verifica che il codice sia corretto</li>
-                            <li>Controlla se il prodotto è nel file Excel</li>
-                        </ul>
-                    </div>
-                </div>
-            `;
-            
-            resultsDiv.innerHTML = noResultHtml + resultsDiv.innerHTML;
-        }
-
-        window.addEventListener('beforeunload', function() {
-            if (isScanning) {
-                Quagga.stop();
+        
+        function stopCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
             }
-        });
+            document.getElementById('video-container').style.display = 'none';
+            document.getElementById('photoPreview').style.display = 'none';
+            document.getElementById('captureInstructions').style.display = 'none';
+        }
+        
+        // Previeni che la pagina vada in standby durante la scansione
+        let wakeLock = null;
+        
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {
+                console.log('Wake Lock error:', err);
+            }
+        }
+        
+        async function releaseWakeLock() {
+            if (wakeLock !== null) {
+                await wakeLock.release();
+                wakeLock = null;
+            }
+        }
+        
+
     </script>
 </body>
 </html>
